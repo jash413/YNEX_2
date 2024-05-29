@@ -22,12 +22,18 @@ const ViewTasks = () => {
 
   const COLUMNS = [
     {
-      Header: "Active",
-      accessor: "active",
-    },
-    {
-      Header: "Project ID",
-      accessor: "project_id",
+      Header: "Action",
+      accessor: "action_task_id",
+      Cell : ({row : {original}}) => (
+        <div className="flex justify-center space-x-2">
+          <Link href={`/components/project-management/edit-task/${original.task_code_id}`}>
+              <i className="ri-pencil-fill"></i>
+          </Link>
+          {/* <Link href={`/components/project-management/delete-task/${original.task_code_id}`}>
+              <i className="ri-delete-bin-6-fill"></i>
+          </Link> */}
+        </div>
+      )
     },
     {
       Header: "Task Code",
