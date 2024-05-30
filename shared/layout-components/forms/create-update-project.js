@@ -110,8 +110,13 @@ const CreateUpdateProject = (props) => {
             data: {
               type: "string",
               attributes: {
-                ...formData,
-                projectTemplate: selectTemplate,
+                name: formData.name,
+                description: formData.description,
+                address1: formData.address1,
+                address2: formData.address2,
+                zipcode: formData.zipcode,
+                state: formData.state,
+                budget_estimated: Number(formData.budget),
                 home_owner_id: Number(userid),
                 gc_business_id: 101000,
               },
