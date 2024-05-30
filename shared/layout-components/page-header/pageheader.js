@@ -3,7 +3,6 @@ import axios from "axios";
 import Select from "react-select";
 import Link from "next/link";
 import network from "../../../config";
-import { set } from "date-fns";
 
 const Pageheader = ({
   loadProjectData,
@@ -15,60 +14,53 @@ const Pageheader = ({
   createProject,
 }) => {
   const [projectData, setProjectData] = useState([]);
-  const [userData, setUserData] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedProjects, setSelectedProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [changeOrder, setChangeOrder] = useState([]);
-  const [userid, setUserid] = useState(null);
-
+  const [changeOrders, setChangeOrders] = useState([]);
+  const userId = localStorage.getItem("userid");
 
   useEffect(() => {
-    setUserid(localStorage.getItem("userid"));
-    try {
-      const savedProject = localStorage.getItem("selectedProject");
-      if (savedProject) setSelectedProject(JSON.parse(savedProject));
-    } catch (error) {
-      console.error("Error parsing localStorage data:", error);
-    }
+    const fetchData = async () => {
+      try {
+        const savedProject = localStorage.getItem("selectedProject");
+        if (savedProject) setSelectedProject(JSON.parse(savedProject));
 
-    axios
-      .get(`${network.onlineUrl}api/project?filter[home_owner]=${userid}`, {
-        headers: { Authorization: `Bearer ${network.token}` },
-      })
-      .then((response) => {
+        const response = await axios.get(`${network.onlineUrl}api/project?filter[home_owner]=${userId}`, {
+          headers: { Authorization: `Bearer ${network.token}` },
+        });
+
         setProjectData(response.data.body.data);
-        setSelectedProjects(response.data.body.data);
-      })
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
 
-      .catch((error) => console.error("Error fetching projects:", error));
-  }, []);
+    fetchData();
+  }, [userId]);
 
-  const handleProjectSelect = (selectedOption) => {
+  const handleProjectSelect = async (selectedOption) => {
     const selectedProject = selectedOption
       ? projectData.find((project) => project.id === selectedOption.value)
       : null;
     setSelectedProject(selectedProject);
     localStorage.setItem("selectedProject", JSON.stringify(selectedProject));
 
-    axios
-      .get(
-        `${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`,
-        {
-          headers: { Authorization: `Bearer ${network.token}` },
-        }
-      )
-      .then((response) => {setTasks(response.data.body.data); localStorage.setItem("projectTasks", JSON.stringify(response.data.body.data))})
-      .catch((error) => console.error("Error fetching tasks:", error));
-
-    axios
-      .get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
+    try {
+      const tasksResponse = await axios.get(`${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`, {
         headers: { Authorization: `Bearer ${network.token}` },
-      })
-      .then((response) =>{ setChangeOrder(response.data.body.data); localStorage.setItem("projectChangeOrders", JSON.stringify(response.data.body.data))})
-      .catch((error) =>
-        console.error("Error fetching purchase orders:", error)
-      );
+      });
+      setTasks(tasksResponse.data.body.data);
+      localStorage.setItem("projectTasks", JSON.stringify(tasksResponse.data.body.data));
+
+      const changeOrdersResponse = await axios.get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
+        headers: { Authorization: `Bearer ${network.token}` },
+      });
+      setChangeOrders(changeOrdersResponse.data.body.data);
+      localStorage.setItem("projectChangeOrders", JSON.stringify(changeOrdersResponse.data.body.data));
+    } catch (error) {
+      console.error("Error fetching tasks or change orders:", error);
+    }
+
     loadProjectData();
   };
 
@@ -154,7 +146,7 @@ const Pageheader = ({
             }
             options={[
               { value: null, label: "Select Project" },
-              ...selectedProjects.map((project) => ({
+              ...projectData.map((project) => ({
                 value: project.id,
                 label: project.attributes.name,
               })),
