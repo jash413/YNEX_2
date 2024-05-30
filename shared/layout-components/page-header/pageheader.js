@@ -17,12 +17,13 @@ const Pageheader = ({
   const [selectedProject, setSelectedProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [changeOrders, setChangeOrders] = useState([]);
-  const userId = localStorage.getItem("userid");
 
   useEffect(() => {
+    const userId = typeof window !== 'undefined' ? window.localStorage.getItem("userid") : null;
+
     const fetchData = async () => {
       try {
-        const savedProject = localStorage.getItem("selectedProject");
+        const savedProject = typeof window !== 'undefined' ? window.localStorage.getItem("selectedProject") : null;
         if (savedProject) setSelectedProject(JSON.parse(savedProject));
 
         const response = await axios.get(`${network.onlineUrl}api/project?filter[home_owner]=${userId}`, {
@@ -36,27 +37,36 @@ const Pageheader = ({
     };
 
     fetchData();
-  }, [userId]);
+  }, []);
 
   const handleProjectSelect = async (selectedOption) => {
     const selectedProject = selectedOption
       ? projectData.find((project) => project.id === selectedOption.value)
       : null;
     setSelectedProject(selectedProject);
-    localStorage.setItem("selectedProject", JSON.stringify(selectedProject));
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem("selectedProject", JSON.stringify(selectedProject));
+    }
 
     try {
       const tasksResponse = await axios.get(`${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`, {
         headers: { Authorization: `Bearer ${network.token}` },
       });
       setTasks(tasksResponse.data.body.data);
-      localStorage.setItem("projectTasks", JSON.stringify(tasksResponse.data.body.data));
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem("projectTasks", JSON.stringify(tasksResponse.data.body.data));
+      }
 
       const changeOrdersResponse = await axios.get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
         headers: { Authorization: `Bearer ${network.token}` },
       });
       setChangeOrders(changeOrdersResponse.data.body.data);
-      localStorage.setItem("projectChangeOrders", JSON.stringify(changeOrdersResponse.data.body.data));
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem("projectChangeOrders", JSON.stringify(changeOrdersResponse.data.body.data));
+      }
     } catch (error) {
       console.error("Error fetching tasks or change orders:", error);
     }

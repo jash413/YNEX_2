@@ -112,14 +112,14 @@ const CreateUpdateProject = (props) => {
               attributes: {
                 ...formData,
                 projectTemplate: selectTemplate,
-                home_owner_id: userid,
+                home_owner_id: Number(userid),
                 gc_business_id: 101000,
               },
             },
           },
           {
             headers: {
-              Authorization: `${token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         )
