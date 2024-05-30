@@ -20,10 +20,11 @@ const Pageheader = ({
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [changeOrder, setChangeOrder] = useState([]);
-  const userid = localStorage.getItem("userid");
+  const [userid, setUserid] = useState(null);
 
 
   useEffect(() => {
+    setUserid(localStorage.getItem("userid"));
     try {
       const savedProject = localStorage.getItem("selectedProject");
       if (savedProject) setSelectedProject(JSON.parse(savedProject));
