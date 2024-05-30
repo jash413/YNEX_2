@@ -15,6 +15,7 @@ const today = new Date();
 const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import network from "@/config";
+import { set } from "date-fns";
 
 const formDataSchema = z.object({
   selectedProject: z.string(),
@@ -29,7 +30,7 @@ const formDataSchema = z.object({
   start_date: z.date(),
   end_date: z.date(),
   customer_invite: z.string(),
-  files: z.array(z.any()),
+  files: z.array(z.string()),
 });
 
 const CreateUpdateProject = (props) => {
@@ -53,6 +54,7 @@ const CreateUpdateProject = (props) => {
   const [selectTemplate, setSelectTemplate] = useState("");
   const [multiselectdata, setMultiselectdata] = useState([]);
   const [files, setFiles] = useState([]);
+  const [token, setToken] = useState("");
 
   const Selectoption1 = [
     { value: "custom_template", label: "Custom Template" },
@@ -60,9 +62,13 @@ const CreateUpdateProject = (props) => {
   ];
 
   const handleFileChange = (response) => {
-    setFormData({ ...formData, files:[...formData.files, response[0].file_url] });
+    setFormData({
+      ...formData,
+      files: [...formData.files, response[0].file_url],
+    });
   };
   useEffect(() => {
+    setToken(localStorage.getItem("token"));
     fetch("/api/users/")
       .then((response) => response.json())
       .then((data) => setMultiselectdata(data.data))
@@ -76,7 +82,6 @@ const CreateUpdateProject = (props) => {
   const handleInputChange = (event) => {
     setFormData({ ...formData, [event.target.id]: event.target.value });
   };
-
 
   const getDataFromLocalStorage = () => {
     if (
@@ -94,28 +99,33 @@ const CreateUpdateProject = (props) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const userid = localStorage.getItem("userid");
 
     try {
       // formDataSchema.parse(formData);
-        axios
-          .post(
-            `${network.onlineUrl}api/project`,
-            { data: {type:"string", attributes: {...formData, projectTemplate: selectTemplate, home_owner_id: 100007,
-              gc_business_id: 101000 } }},
-            {
-              headers: {
-                Authorization: `${network.token}`,
+      axios
+        .post(
+          `${network.onlineUrl}api/project`,
+          {
+            data: {
+              type: "string",
+              attributes: {
+                ...formData,
+                projectTemplate: selectTemplate,
+                home_owner_id: userid,
+                gc_business_id: 101000,
               },
-            }
-          )
-          .then((response) => {
-            console.log(response);
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-
-      setFormData({
+            },
+          },
+          {
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        )
+        .then((response) => {
+          console.log(response);
+           setFormData({
         name: "",
         client_name: "", // Client Name
         assigned_to: [], // Assigned To
@@ -130,6 +140,12 @@ const CreateUpdateProject = (props) => {
         customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
         files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
       });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+
+     
     } catch (error) {
       console.log(error);
     }
@@ -390,10 +406,18 @@ const CreateUpdateProject = (props) => {
                           url: "https://backend-api-topaz.vercel.app/api/upload",
                           process: {
                             headers: {
-                              Authorization: `Bearer ${network.token}`,
+                              Authorization: `Bearer ${token}`,
                             },
                           },
-                          onload: (response) => { handleFileChange(JSON.parse(response)) },
+                          
+                          
+                        }}
+                        onprocessfile={(error, file) => {
+                          if (error) {
+                            console.log("error", error);
+                          } else {
+                            handleFileChange(JSON.parse(file.serverId));
+                          }
                         }}
                         name="files"
                         labelIdle="Drag & Drop your file here or click "

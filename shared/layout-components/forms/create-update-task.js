@@ -73,8 +73,8 @@ const CreateUpdateTask = (props) => {
           },
         })
         .then((response) => {
-          const task = response.body.data;
-          {task && setFormData({
+          const task = response.body.data.attributes;
+          setFormData({
             taskCode: task.task_code_id,
             taskName: task.task_name,
             description: task.description,
@@ -89,7 +89,7 @@ const CreateUpdateTask = (props) => {
             percentageComplete: task.percentage_complete,
             filesUrls: task.files_urls,
           });}
-        })
+        )
         .catch((error) => {
           console.log(error);
         });
@@ -208,6 +208,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="taskCode"
                   onChange={handleInputChange}
+                  value={formData.taskCode}
                 />
               </div>
               <div className="mb-4">
@@ -219,6 +220,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="taskName"
                   onChange={handleInputChange}
+                  value={formData.taskName}
                 />
               </div>
               
@@ -231,6 +233,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="startDate"
                   onChange={handleInputChange}
+                  value={formData.startDate}
                 />
               </div>
               <div className="mb-4">
@@ -242,6 +245,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="endDate"
                   onChange={handleInputChange}
+                  value={formData.endDate}
                 />
               </div>
               <div className="mb-4">
@@ -253,6 +257,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="taskOwnerId"
                   onChange={handleInputChange}
+                  value={formData.taskOwnerId}
                 />
               </div>
               <div className="mb-4">
@@ -264,6 +269,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="businessId"
                   onChange={handleInputChange}
+                  value={formData.businessId}
                 />
               </div>
               <div className="mb-4">
@@ -275,6 +281,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="status"
                   onChange={handleInputChange}
+                  value={formData.status}
                 />
               </div>
               <div className="mb-4">
@@ -286,6 +293,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="percentageComplete"
                   onChange={handleInputChange}
+                  value={formData.percentageComplete}
                 />
               </div>
               <div className="mb-4">
@@ -298,6 +306,7 @@ const CreateUpdateTask = (props) => {
                   rows="3"
                   cols="50"
                   onChange={handleInputChange}
+                  value={formData.description}
                 />
               </div>
               <div className="mb-4">
@@ -310,6 +319,7 @@ const CreateUpdateTask = (props) => {
                   rows="3"
                   cols="50"
                   onChange={handleInputChange}
+                  value={formData.notes}
                 />
               </div>
               <div className="mb-4">
@@ -321,6 +331,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="estimatedBudget"
                   onChange={handleInputChange}
+                  value={formData.estimatedBudget}
                 />
               </div>
               <div className="mb-4">
@@ -332,6 +343,7 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="actualSpent"
                   onChange={handleInputChange}
+                  value={formData.actualSpent}
                 />
               </div>
               

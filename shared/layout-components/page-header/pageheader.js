@@ -3,6 +3,7 @@ import axios from "axios";
 import Select from "react-select";
 import Link from "next/link";
 import network from "../../../config";
+import { set } from "date-fns";
 
 const Pageheader = ({
   loadProjectData,
@@ -14,111 +15,33 @@ const Pageheader = ({
   createProject,
 }) => {
   const [projectData, setProjectData] = useState([]);
-  const [usersData, setUsersData] = useState([]);
+  const [userData, setUserData] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [changeOrder, setChangeOrder] = useState([]);
+  const userid = localStorage.getItem("userid");
+
 
   useEffect(() => {
     try {
       const savedProject = localStorage.getItem("selectedProject");
-      const savedUser = localStorage.getItem("selectedUser");
-
       if (savedProject) setSelectedProject(JSON.parse(savedProject));
-      if (savedUser) setSelectedUser(JSON.parse(savedUser));
     } catch (error) {
       console.error("Error parsing localStorage data:", error);
     }
 
     axios
-      .get(`${network.onlineUrl}api/project`, {
+      .get(`${network.onlineUrl}api/project?filter[home_owner]=${userid}`, {
         headers: { Authorization: `Bearer ${network.token}` },
       })
-      .then((response) => setProjectData(response.data.body.data))
+      .then((response) => {
+        setProjectData(response.data.body.data);
+        setSelectedProjects(response.data.body.data);
+      })
+
       .catch((error) => console.error("Error fetching projects:", error));
-
-    axios
-      .get(`${network.onlineUrl}api/user`, {
-        headers: { Authorization: `Bearer ${network.token}` },
-      })
-      .then((response) => setUsersData(response.data.body.data))
-      .catch((error) => console.error("Error fetching users:", error));
-
-    axios
-      .get(`${network.onlineUrl}api/task`, {
-        headers: { Authorization: `Bearer ${network.token}` },
-      })
-      .then((response) => setTasks(response.data.body.data))
-      .catch((error) => console.error("Error fetching tasks:", error));
-
-    axios
-      .get(`${network.onlineUrl}api/change_Order`, {
-        headers: { Authorization: `Bearer ${network.token}` },
-      })
-      .then((response) => setPurchaseOrders(response.data.body.data))
-      .catch((error) =>
-        console.error("Error fetching purchase orders:", error)
-      );
   }, []);
-
-  const handleUserSelect = (selectedOption) => {
-    localStorage.removeItem("selectedProject");
-    localStorage.removeItem("projectTasks");
-    localStorage.removeItem("purchaseOrders");
-    setSelectedProject(null);
-
-    const selectedUser = selectedOption
-      ? usersData.find((user) => user.id === selectedOption.value)
-      : null;
-    setSelectedUser(selectedUser);
-    localStorage.setItem("selectedUser", JSON.stringify(selectedUser));
-
-    if (selectedUser?.relationships?.home_owner_projects) {
-      const selectedProjectIds =
-        selectedUser.relationships.home_owner_projects.data.map(
-          (project) => project.id
-        );
-      const selectedProjects = projectData.filter((project) =>
-        selectedProjectIds.includes(project.id)
-      );
-      setSelectedProjects(selectedProjects);
-    } else {
-      setSelectedProjects([]);
-    }
-    loadUserData();
-  };
-
-  const handleTasks = () => {
-    const projectTasks = tasks.filter(
-      (task) => task.project_id === selectedProject?.id
-    );
-    const formattedProjectTasks = projectTasks.map((task) => ({
-      id: task.id,
-      ...task.attributes,
-      updated_at: new Date(task.attributes.updated_at).toLocaleString(),
-      created_at: new Date(task.attributes.created_at).toLocaleString(),
-    }));
-    localStorage.setItem("projectTasks", JSON.stringify(formattedProjectTasks));
-  };
-
-  const handlePurchaseOrders = () => {
-    const projectPurchaseOrders = purchaseOrders.filter(
-      (po) => po?.project_id === selectedProject?.id
-    );
-    const formattedProjectPurchaseOrders = projectPurchaseOrders.map((po) => ({
-      id: po.id,
-      ...po.attributes,
-      updatedAt: new Date(po.attributes.updatedAt).toLocaleString(),
-      createdAt: new Date(po.attributes.createdAt).toLocaleString(),
-    }));
-    setPurchaseOrders(formattedProjectPurchaseOrders);
-    localStorage.setItem(
-      "purchaseOrders",
-      JSON.stringify(formattedProjectPurchaseOrders)
-    );
-  };
 
   const handleProjectSelect = (selectedOption) => {
     const selectedProject = selectedOption
@@ -126,8 +49,25 @@ const Pageheader = ({
       : null;
     setSelectedProject(selectedProject);
     localStorage.setItem("selectedProject", JSON.stringify(selectedProject));
-    handleTasks();
-    handlePurchaseOrders();
+
+    axios
+      .get(
+        `${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`,
+        {
+          headers: { Authorization: `Bearer ${network.token}` },
+        }
+      )
+      .then((response) => {setTasks(response.data.body.data); localStorage.setItem("projectTasks", JSON.stringify(response.data.body.data))})
+      .catch((error) => console.error("Error fetching tasks:", error));
+
+    axios
+      .get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
+        headers: { Authorization: `Bearer ${network.token}` },
+      })
+      .then((response) =>{ setChangeOrder(response.data.body.data); localStorage.setItem("projectChangeOrders", JSON.stringify(response.data.body.data))})
+      .catch((error) =>
+        console.error("Error fetching purchase orders:", error)
+      );
     loadProjectData();
   };
 
@@ -199,33 +139,6 @@ const Pageheader = ({
             </button>
           </ol>
         )}
-        <ol className="flex items-center whitespace-nowrap min-w-0">
-          <Select
-            name="user"
-            isDisabled={isDisabled}
-            value={
-              selectedUser
-                ? {
-                    value: selectedUser.id,
-                    label: selectedUser.attributes.username,
-                  }
-                : null
-            }
-            options={[
-              { value: null, label: "Select User" },
-              ...usersData.map((user) => ({
-                value: user.id,
-                label: user.attributes.username,
-              })),
-            ]}
-            styles={selectStyles}
-            className="js-example-basic-single w-full min-w-[210px]"
-            isSearchable
-            menuPlacement="auto"
-            placeholder="Select User"
-            onChange={handleUserSelect}
-          />
-        </ol>
         <ol className="flex items-center whitespace-nowrap min-w-0">
           <Select
             name="project"

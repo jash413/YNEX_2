@@ -23,10 +23,10 @@ const ViewTasks = () => {
   const COLUMNS = [
     {
       Header: "Action",
-      accessor: "action_task_id",
+      accessor: "attributes.action_task_id",
       Cell : ({row : {original}}) => (
         <div className="flex justify-center space-x-2">
-          <Link href={`/components/project-management/edit-task/${original.task_code_id}`}>
+          <Link href={`/components/project-management/edit-task/${original.id}`}>
               <i className="ri-pencil-fill"></i>
           </Link>
           {/* <Link href={`/components/project-management/delete-task/${original.task_code_id}`}>
@@ -37,55 +37,55 @@ const ViewTasks = () => {
     },
     {
       Header: "Task Code",
-      accessor: "task_code_id",
+      accessor: "attributes.task_code_id",
     },
     {
       Header: "Task Name",
-      accessor: "task_name",
+      accessor: "attributes.task_name",
     },
     {
       Header: "Description",
-      accessor: "description",
+      accessor: "attributes.description",
     },
     {
       Header: "Start Date",
-      accessor: "start_date",
+      accessor: "attributes.start_date",
     },
     {
       Header: "End Date",
-      accessor: "end_date",
+      accessor: "attributes.end_date",
     },
     {
       Header: "Task Owner ID",
-      accessor: "task_owner_id",
+      accessor: "attributes.task_owner_id",
     },
     {
       Header: "Business ID",
-      accessor: "business_id",
+      accessor: "attributes.business_id",
     },
     {
       Header: "Status",
-      accessor: "status",
+      accessor: "attributes.status",
     },
     {
       Header: "Notes",
-      accessor: "notes",
+      accessor: "attributes.notes",
     },
     {
       Header: "Estimated Budget",
-      accessor: "budget_estimated",
+      accessor: "attributes.budget_estimated",
     },
     {
       Header: "Actual Spent",
-      accessor: "actual_spent",
+      accessor: "attributes.actual_spent",
     },
     {
       Header: "Percentage Complete",
-      accessor: "percentage_complete",
+      accessor: "attributes.percentage_complete",
     },
     {
       Header: "Files URLs",
-      accessor: "files_urls",
+      accessor: "attributes.files_urls",
     },
   ];
 
@@ -124,7 +124,6 @@ const getTaskDataFromLocalStorage = () => {
   }
 };
 useEffect(() => {
-  getUserDataFromLocalStorage();
   getProjectDataFromLocalStorage();
   getTaskDataFromLocalStorage();
 
