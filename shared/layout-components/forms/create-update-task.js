@@ -33,7 +33,21 @@ const formDataSchema = z.object({
 const CreateUpdateTask = (props) => {
   const formType = props.formType;
   const taskId = props.taskId;
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    taskCode: null,
+    taskName: null,
+    description: null,
+    startDate: null,
+    endDate: null,
+    taskOwnerId: null,
+    businessId: null,
+    status: null,
+    notes: null,
+    estimatedBudget: null,
+    actualSpent: null,
+    percentageComplete: null,
+    files_urls: [],
+  });
   const [scopeData, setScopeData] = useState({
     task_inscope: [{ taskDetail: "" }],
     task_outscope: [{ taskDetail: "" }],
@@ -47,7 +61,7 @@ const CreateUpdateTask = (props) => {
   const handleFileUpload = (response) => {
     setFormData(prevState => ({
       ...prevState,
-      files_urls: response.file_url // assuming the server response has a file_url property
+      files_urls: [...formData.files_urls , response[0].file_url] // assuming the server response has a file_url property
     }));
   };
   useEffect(() => {
@@ -60,7 +74,7 @@ const CreateUpdateTask = (props) => {
         })
         .then((response) => {
           const task = response.body.data;
-          setFormData({
+          {task && setFormData({
             taskCode: task.task_code_id,
             taskName: task.task_name,
             description: task.description,
@@ -74,7 +88,7 @@ const CreateUpdateTask = (props) => {
             actualSpent: task.actual_spent,
             percentageComplete: task.percentage_complete,
             filesUrls: task.files_urls,
-          });
+          });}
         })
         .catch((error) => {
           console.log(error);
@@ -334,11 +348,10 @@ const CreateUpdateTask = (props) => {
       "image/gif",
     ]}
     server={{
-      url: "/api/upload",
+      url: `${network.onlineUrl}api/upload`,
       process: {
-        ondata: (formData) => {
-          formData.append('filepond', 'filepond');
-          return formData;
+        headers: {
+          Authorization: `Bearer ${network.token}`,
         },
         onload: (response) => handleFileUpload(JSON.parse(response)),
       },
@@ -349,7 +362,7 @@ const CreateUpdateTask = (props) => {
     allowMultiple={true}
     allowImagePreview={true}
     maxFiles={10}
-    name="filepond"
+    name="files"
     labelIdle='Drag & Drop your files or <span className="filepond--label-action">Browse</span>'
   />
 </div>

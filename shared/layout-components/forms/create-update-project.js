@@ -52,11 +52,16 @@ const CreateUpdateProject = (props) => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectTemplate, setSelectTemplate] = useState("");
   const [multiselectdata, setMultiselectdata] = useState([]);
+  const [files, setFiles] = useState([]);
+
   const Selectoption1 = [
     { value: "custom_template", label: "Custom Template" },
     { value: "remodel_template", label: "Remodel Template" },
   ];
 
+  const handleFileChange = (response) => {
+    setFormData({ ...formData, files:[...formData.files, response[0].file_url] });
+  };
   useEffect(() => {
     fetch("/api/users/")
       .then((response) => response.json())
@@ -72,9 +77,6 @@ const CreateUpdateProject = (props) => {
     setFormData({ ...formData, [event.target.id]: event.target.value });
   };
 
-  const handleFileChange = (event) => {
-    setFormData({ ...formData, files: Array.from(event.target.files) });
-  };
 
   const getDataFromLocalStorage = () => {
     if (
@@ -380,26 +382,8 @@ const CreateUpdateProject = (props) => {
                         Attachments
                       </label>
                       <FilePond
-                        files={formData.files}
-                        onprocessfile={(error, file, response) => {
-                          console.log("File upload complete", file, response);
-                          if (error) {
-                            console.log("Error during file processing:", error);
-                            return;
-                          }
-                          // Set file_url to the server response
-                          setFormData({
-                            ...formData,
-                            files: formData.files.map((fileItem) =>
-                              fileItem.id === file.id
-                                ? {
-                                    ...fileItem,
-                                    file_url: response.body[0].file_url,
-                                  }
-                                : fileItem
-                            ),
-                          });
-                        }}
+                        files={files}
+                        onupdatefiles={setFiles}
                         allowMultiple={true}
                         maxFiles={3}
                         server={{
@@ -409,6 +393,7 @@ const CreateUpdateProject = (props) => {
                               Authorization: `Bearer ${network.token}`,
                             },
                           },
+                          onload: (response) => { handleFileChange(JSON.parse(response)) },
                         }}
                         name="files"
                         labelIdle="Drag & Drop your file here or click "
