@@ -6,7 +6,6 @@ import network from "../../../config";
 
 const Pageheader = ({
   loadProjectData,
-  loadUserData,
   isDisabled,
   mainpageurl,
   mainpage,
@@ -15,53 +14,87 @@ const Pageheader = ({
 }) => {
   const [projectData, setProjectData] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [tasks, setTasks] = useState([]);
-  const [changeOrders, setChangeOrders] = useState([]);
-  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  const [selectedProjects, setSelectedProjects] = useState([]);
+  const userid =
+    typeof window !== "undefined" ? localStorage.getItem("userid") : null;
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProjects = async () => {
       try {
         const savedProject = localStorage.getItem("selectedProject");
-        if (savedProject) setSelectedProject(JSON.parse(savedProject));
+        console.log("savedProject", savedProject);
 
-        const response = await axios.get(`${network.onlineUrl}api/project?filter[home_owner]=${userId}`, {
-          headers: { Authorization: `Bearer ${network.token}` },
-        });
+        if (savedProject !== null) {
+          try {
+            setSelectedProject(JSON.parse(savedProject));
+          } catch (error) {
+            console.error(
+              "Error parsing savedProject from localStorage:",
+              error
+            );
+          }
+        }
+
+        const response = await axios.get(
+          `${network.onlineUrl}api/project?filter[home_owner]=${userid}`,
+          {
+            headers: { Authorization: `Bearer ${network.token}` },
+          }
+        );
 
         setProjectData(response.data.body.data);
+        setSelectedProjects(response.data.body.data);
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
     };
 
-    fetchData();
-  }, [userId]);
+    fetchProjects();
+  }, []);
 
   const handleProjectSelect = async (selectedOption) => {
-    const selectedProject = selectedOption
-      ? projectData.find((project) => project.id === selectedOption.value)
-      : null;
-    setSelectedProject(selectedProject);
-    localStorage.setItem("selectedProject", JSON.stringify(selectedProject));
-
     try {
-      const tasksResponse = await axios.get(`${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`, {
-        headers: { Authorization: `Bearer ${network.token}` },
-      });
-      setTasks(tasksResponse.data.body.data);
-      localStorage.setItem("projectTasks", JSON.stringify(tasksResponse.data.body.data));
+      const newSelectedProject = selectedOption
+        ? projectData.find((project) => project.id === selectedOption.value)
+        : null;
 
-      const changeOrdersResponse = await axios.get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
-        headers: { Authorization: `Bearer ${network.token}` },
-      });
-      setChangeOrders(changeOrdersResponse.data.body.data);
-      localStorage.setItem("projectChangeOrders", JSON.stringify(changeOrdersResponse.data.body.data));
+      setSelectedProject(newSelectedProject);
+      localStorage.setItem(
+        "selectedProject",
+        JSON.stringify(newSelectedProject)
+      );
+
+      if (newSelectedProject) {
+        const projectId = newSelectedProject.id;
+        const [tasksResponse, changeOrdersResponse] = await Promise.all([
+          axios.get(
+            `${network.onlineUrl}api/task?filter[project]=${projectId}`,
+            {
+              headers: { Authorization: `Bearer ${network.token}` },
+            }
+          ),
+          axios.get(
+            `${network.onlineUrl}api/change_Order?filter[project]=${projectId}`,
+            {
+              headers: { Authorization: `Bearer ${network.token}` },
+            }
+          ),
+        ]);
+
+        localStorage.setItem(
+          "projectTasks",
+          JSON.stringify(tasksResponse.data.body.data)
+        );
+        localStorage.setItem(
+          "projectChangeOrders",
+          JSON.stringify(changeOrdersResponse.data.body.data)
+        );
+      }
+
+      loadProjectData();
     } catch (error) {
-      console.error("Error fetching tasks or change orders:", error);
+      console.error("Error fetching tasks or purchase orders:", error);
     }
-
-    loadProjectData();
   };
 
   const selectStyles = {
@@ -101,6 +134,20 @@ const Pageheader = ({
       color: isDisabled ? "#e2e8f0" : "#fff",
       fontWeight: "600",
     }),
+  };
+  const renderProjectOptions = () => {
+    try {
+      return [
+        { value: null, label: "Select Project" },
+        ...selectedProjects.map((project) => ({
+          value: project.id,
+          label: project.attributes?.name || "Unnamed Project",
+        })),
+      ];
+    } catch (error) {
+      console.error("Error mapping project options:", error);
+      return [{ value: null, label: "Error loading projects" }];
+    }
   };
 
   return (
@@ -144,13 +191,7 @@ const Pageheader = ({
                   }
                 : null
             }
-            options={[
-              { value: null, label: "Select Project" },
-              ...projectData.map((project) => ({
-                value: project.id,
-                label: project.attributes.name,
-              })),
-            ]}
+            options={renderProjectOptions()}
             styles={selectStyles}
             className="js-example-basic-single w-full min-w-[210px]"
             isSearchable
