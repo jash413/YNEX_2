@@ -1,0 +1,48 @@
+/* schedule.module.css */
+.ganttContainer {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .noTasksContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 1.5rem;
+    color: #666;
+  }
+  
+  .taskListHeader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    border-right: 1px solid #e0e0e0;
+    font-weight: 600;
+    color: #333;
+    background-color: #f7f7f7;
+    border-top-left-radius: 8px;
+  }
+  
+  .taskListRow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+    border-right: 1px solid #e0e0e0;
+    background-color: #fff;
+    color: #333;
+    transition: background-color 0.2s;
+  }
+  
+  .taskListRow:nth-child(even) {
+    background-color: #f9f6ff;
+  }
+  
+  .taskListRow:hover {
+    background-color: #f0ebff;
+  }

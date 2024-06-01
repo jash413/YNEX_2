@@ -1,15 +1,15 @@
 import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Seo from "@/shared/layout-components/seo/seo";
-import dynamic from "next/dynamic";
-import { Gantt } from "gantt-task-react";
+import { Gantt, ViewMode } from "gantt-task-react";
 import React from "react";
 import "gantt-task-react/dist/index.css";
 import { useState, useEffect } from "react";
-const CountUp = dynamic(() => import("react-countup"), { ssr: false });
+import styles from "../../../public/assets/css/schedule.module.css";
 
 const Schedule = () => {
   const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [tasks, setTasks] = useState([]);
+
   const getProjectDataFromLocalStorage = () => {
     if (
       localStorage.getItem("selectedProject") !== null &&
@@ -23,62 +23,109 @@ const Schedule = () => {
       setSelectedProject(null);
     }
     const tasksArray =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("projectTasks"))
-      : null;
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("projectTasks"))
+        : null;
 
-  if (tasksArray) {
-    const formattedTasks = tasksArray
-      .filter(
-        (task) => task.attributes.start_date && task.attributes.end_date
-      )
-      .map((task) => ({
-        start: new Date(task.attributes.start_date),
-        end: new Date(task.attributes.end_date),
-        name: task.attributes.task_name,
-        id: task.id.toString(),
-        type: "task",
-        progress: parseInt(task.attributes.percentage_complete),
-        styles: { progressColor: "#845adf", progressSelectedColor: "white" },
-      }));
+    if (tasksArray) {
+      const formattedTasks = tasksArray
+        .filter(
+          (task) => task.attributes.start_date && task.attributes.end_date
+        )
+        .map((task) => ({
+          start: new Date(task.attributes.start_date),
+          end: new Date(task.attributes.end_date),
+          name: task.attributes.task_name,
+          id: task.id.toString(),
+          type: "task",
+          progress: parseInt(task.attributes.percentage_complete),
+          styles: {
+            progressColor: "#845adf",
+            progressSelectedColor: "white",
+            backgroundColor: "#f0ebff",
+            backgroundSelectedColor: "#c8b3ff",
+          },
+        }));
 
-    setTasks(formattedTasks);
-  }
-  };
-
-  const getUserDataFromLocalStorage = () => {
-    if (
-      localStorage.getItem("selectedUser") !== null &&
-      localStorage.getItem("selectedUser") !== "undefined"
-    ) {
-      const selectedUser = JSON.parse(localStorage.getItem("selectedUser"));
-      setSelectedUser(selectedUser);
+      setTasks(formattedTasks);
     }
   };
-  const [tasks, setTasks] = useState([]);
+
   useEffect(() => {
-   getProjectDataFromLocalStorage();
+    getProjectDataFromLocalStorage();
   }, []);
+
+  // Custom components to hide task names in the table
+  const CustomTaskListHeader = () => {
+    return <div className={styles.taskListHeader}>Tasks</div>;
+  };
+
+  const CustomTaskListTable = (props) => {
+    const { task, rowHeight, fontFamily, fontSize } = props;
+    return (
+      <div
+        className={styles.taskListRow}
+        style={{
+          height: rowHeight,
+          fontFamily: fontFamily,
+          fontSize: fontSize,
+        }}
+      >
+        {task.name}
+      </div>
+    );
+  };
 
   return (
     <div>
       <Seo title={"Project Schedule"} />
       <Pageheader
-        activepage={`${selectedProject?.project_name || `Schedule`}`}
+        activepage={`${selectedProject?.attributes?.name || `Schedule`}`}
         mainpage="Schedule"
         mainpageurl="/components/project-management/schedule/"
         loadProjectData={getProjectDataFromLocalStorage}
-        loadUserData={getUserDataFromLocalStorage}
         createProject={true}
       />
       <div className="block">
-        <div className="gantt-container">
-          {tasks.length !== 0 && <Gantt tasks={tasks} viewMode="Week" />}
-        </div>
+        {tasks.length !== 0 ? (
+          <div className={styles.ganttContainer}>
+            <Gantt
+              tasks={tasks}
+              viewMode={ViewMode.Week}
+              TaskListHeader={CustomTaskListHeader}
+              TaskListTable={CustomTaskListTable}
+              listCellWidth="" // This will hide the default "Name" column
+              columnWidth={80}
+              rowHeight={60}
+              headerHeight={60}
+              preStrokeColor="rgba(132, 90, 223, 0.3)"
+              postStrokeColor="rgba(132, 90, 223, 0.3)"
+              locale="en-US"
+              barCornerRadius={4}
+              barProgressColor="#845adf"
+              barProgressSelectedColor="white"
+              barBackgroundColor="#f0ebff"
+              barBackgroundSelectedColor="#c8b3ff"
+              projectProgressColor="#845adf"
+              projectProgressSelectedColor="white"
+              projectBackgroundColor="#f0ebff"
+              projectBackgroundSelectedColor="#c8b3ff"
+              arrowColor="rgba(132, 90, 223, 0.7)"
+              fontFamily="Inter, sans-serif"
+              fontSize="14px"
+              lineHeight="20px"
+            />
+          </div>
+        ) : (
+          <div className={styles.noTasksContainer}>
+            <p>No tasks available for this project</p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
 Schedule.layout = "Contentlayout";
 
 export default Schedule;

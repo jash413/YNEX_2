@@ -15,7 +15,7 @@ const Firebaselogin = () => {
 
   const [err, setError] = useState("");
   const [data, setData] = useState({
-    email: "adminnextjs@gmail.com",
+    email: "Jordan.Spieth@mail.com",
     password: "1234567890",
   });
   const { email, password } = data;
@@ -47,7 +47,7 @@ const Firebaselogin = () => {
       .catch((err) => {
         setError("The Auction details did not Match");
         setData({
-          email: "adminnextjs@gmail.com",
+          email: "Jordan.Spieth@mail.com",
           password: "1234567890",
         });
       });
