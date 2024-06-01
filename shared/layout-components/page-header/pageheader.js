@@ -15,6 +15,9 @@ const Pageheader = ({
   const [projectData, setProjectData] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedProjects, setSelectedProjects] = useState([]);
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   const userid =
     typeof window !== "undefined" ? localStorage.getItem("userid") : null;
 
@@ -38,7 +41,7 @@ const Pageheader = ({
         const response = await axios.get(
           `${network.onlineUrl}api/project?filter[home_owner]=${userid}`,
           {
-            headers: { Authorization: `Bearer ${network.token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
 
@@ -70,13 +73,13 @@ const Pageheader = ({
           axios.get(
             `${network.onlineUrl}api/task?filter[project]=${projectId}`,
             {
-              headers: { Authorization: `Bearer ${network.token}` },
+              headers: { Authorization: `Bearer ${token}` },
             }
           ),
           axios.get(
             `${network.onlineUrl}api/change_Order?filter[project]=${projectId}`,
             {
-              headers: { Authorization: `Bearer ${network.token}` },
+              headers: { Authorization: `Bearer ${token}` },
             }
           ),
         ]);

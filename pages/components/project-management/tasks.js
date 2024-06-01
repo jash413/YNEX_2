@@ -2,6 +2,7 @@ import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Seo from "@/shared/layout-components/seo/seo";
 import React, { useState, useEffect } from "react";
 import { ResponsiveDataTable } from "@/shared/data/tables/datatabledata";
+import { format, parseISO } from "date-fns";
 import { ReactTabulator } from "react-tabulator";
 import Link from "next/link";
 import axios from "axios";
@@ -24,16 +25,18 @@ const ViewTasks = () => {
     {
       Header: "Action",
       accessor: "attributes.action_task_id",
-      Cell : ({row : {original}}) => (
+      Cell: ({ row: { original } }) => (
         <div className="flex justify-center space-x-2">
-          <Link href={`/components/project-management/edit-task/${original.id}`}>
-              <i className="ri-pencil-fill"></i>
+          <Link
+            href={`/components/project-management/edit-task/${original.id}`}
+          >
+            <i className="ri-pencil-fill"></i>
           </Link>
           {/* <Link href={`/components/project-management/delete-task/${original.task_code_id}`}>
               <i className="ri-delete-bin-6-fill"></i>
           </Link> */}
         </div>
-      )
+      ),
     },
     {
       Header: "Task Code",
@@ -47,13 +50,16 @@ const ViewTasks = () => {
       Header: "Description",
       accessor: "attributes.description",
     },
+
     {
       Header: "Start Date",
-      accessor: "attributes.start_date",
+      accessor: (row) =>
+        row.attributes.start_date ? format(new Date(row.attributes.start_date), "dd-MMM-yyyy") : null,
     },
     {
       Header: "End Date",
-      accessor: "attributes.end_date",
+      accessor: (row) =>
+        row.attributes.end_date ? format(new Date(row.attributes.end_date), "dd-MMM-yyyy") : null,
     },
     {
       Header: "Task Owner ID",
@@ -89,9 +95,6 @@ const ViewTasks = () => {
     },
   ];
 
-
-
-
   const getProjectDataFromLocalStorage = () => {
     if (
       localStorage.getItem("selectedProject") !== null &&
@@ -112,24 +115,21 @@ const ViewTasks = () => {
     ) {
       const selectedUser = JSON.parse(localStorage.getItem("selectedUser"));
       setSelectedUser(selectedUser);
-  }
-};
-const getTaskDataFromLocalStorage = () => {
-  if (
-    localStorage.getItem("projectTasks") !== null &&
-    localStorage.getItem("projectTasks") !== "undefined"
-  ) {
-    const tasks = JSON.parse(localStorage.getItem("projectTasks"));
-    setTasks(tasks);
-  }
-};
-useEffect(() => {
-  getProjectDataFromLocalStorage();
-  getTaskDataFromLocalStorage();
-
-}, []);
-
-
+    }
+  };
+  const getTaskDataFromLocalStorage = () => {
+    if (
+      localStorage.getItem("projectTasks") !== null &&
+      localStorage.getItem("projectTasks") !== "undefined"
+    ) {
+      const tasks = JSON.parse(localStorage.getItem("projectTasks"));
+      setTasks(tasks);
+    }
+  };
+  useEffect(() => {
+    getProjectDataFromLocalStorage();
+    getTaskDataFromLocalStorage();
+  }, []);
 
   return (
     <div>
@@ -186,17 +186,13 @@ useEffect(() => {
                 </svg>
               </div>
               <div className="flex-grow">
-                <h6 className="mb-1 text-[0.75rem]">
-                  Completed Tasks
-                </h6>
+                <h6 className="mb-1 text-[0.75rem]">Completed Tasks</h6>
                 <div>
                   <h4 className="text-[1.125rem] font-semibold mb-1">
                     <span className="count-up" data-count="319">
                       {completedTasks}
                     </span>
-                 
                   </h4>
-                 
                 </div>
               </div>
             </div>
@@ -212,18 +208,13 @@ useEffect(() => {
                 </svg>
               </div>
               <div className="flex-grow">
-                <h6 className="mb-1 text-[0.75rem]">
-                  Pending Tasks
-                 
-                </h6>
+                <h6 className="mb-1 text-[0.75rem]">Pending Tasks</h6>
                 <div>
                   <h4 className="text-[1.125rem] font-semibold mb-1">
                     <span className="count-up" data-count="81">
                       {pendingTasks}
                     </span>
-                 
                   </h4>
-                  
                 </div>
               </div>
             </div>
@@ -239,18 +230,13 @@ useEffect(() => {
                 </svg>
               </div>
               <div className="flex-grow">
-                <h6 className="mb-1 text-[0.75rem]">
-                  Inprogress Tasks
-                 
-                </h6>
+                <h6 className="mb-1 text-[0.75rem]">Inprogress Tasks</h6>
                 <div>
                   <h4 className="text-[1.125rem] font-semibold mb-1">
                     <span className="count-up" data-count="32">
                       {inProgressTasks}
                     </span>
-              
                   </h4>
-                 
                 </div>
               </div>
             </div>
@@ -263,33 +249,35 @@ useEffect(() => {
             <div className="box-header">
               <h5 className="box-title">Tasks Table</h5>
               <div className="flex">
-            <button
-              type="button"
-              className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !text-[0.75rem]"
-              data-hs-overlay="#create-Task"
-            >
-              <Link href="/components/project-management/create-task/">
-                <i className="ri-add-line font-semibold align-middle"></i>{" "}
-                Create Task
-              </Link>
-            </button>
-            <button
-              type="button"
-              className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !mx-1 !text-[0.75rem] "
-              data-hs-overlay="#compare-Task"
-            >
-              <Link href="/components/project-management/task-kanban/">
-                Kanban View
-              </Link>
-            </button>
-            
-          </div>
+                <button
+                  type="button"
+                  className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !text-[0.75rem]"
+                  data-hs-overlay="#create-Task"
+                >
+                  <Link href="/components/project-management/create-task/">
+                    <i className="ri-add-line font-semibold align-middle"></i>{" "}
+                    Create Task
+                  </Link>
+                </button>
+                <button
+                  type="button"
+                  className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !mx-1 !text-[0.75rem] "
+                  data-hs-overlay="#compare-Task"
+                >
+                  <Link href="/components/project-management/task-kanban/">
+                    Kanban View
+                  </Link>
+                </button>
+              </div>
             </div>
-            
+
             <div className="box-body space-y-3">
               <div className="overflow-hidden">
-                <div id="reactivity-table" className="ti-custom-table ti-striped-table ti-custom-table-hover">
-                  <ResponsiveDataTable columns={COLUMNS} data={tasks}  />
+                <div
+                  id="reactivity-table"
+                  className="ti-custom-table ti-striped-table ti-custom-table-hover"
+                >
+                  <ResponsiveDataTable columns={COLUMNS} data={tasks} />
                 </div>
               </div>
             </div>

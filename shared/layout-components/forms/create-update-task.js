@@ -9,6 +9,8 @@ const today = new Date();
 const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import network from "@/config";
+import { data } from "@/shared/data/tables/datatabledata";
+import format from "date-fns/format";
 
 const formDataSchema = z.object({
   task_amount_from_sub: z
@@ -32,6 +34,9 @@ const formDataSchema = z.object({
 
 const CreateUpdateTask = (props) => {
   const formType = props.formType;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   const taskId = props.taskId;
   const [formData, setFormData] = useState({
     taskCode: null,
@@ -47,6 +52,7 @@ const CreateUpdateTask = (props) => {
     actualSpent: null,
     percentageComplete: null,
     files_urls: [],
+    task_original_id: null,
   });
   const [scopeData, setScopeData] = useState({
     task_inscope: [{ taskDetail: "" }],
@@ -59,9 +65,11 @@ const CreateUpdateTask = (props) => {
     setProgress(event.target.value);
   };
   const handleFileUpload = (response) => {
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
-      files_urls: [...formData.files_urls , response[0].file_url] // assuming the server response has a file_url property
+      files_urls: formData.files_urls
+        ? [...formData.files_urls, response[0].file_url]
+        : [response[0].file_url],
     }));
   };
   useEffect(() => {
@@ -73,7 +81,8 @@ const CreateUpdateTask = (props) => {
           },
         })
         .then((response) => {
-          const task = response.body.data.attributes;
+          const task = response.data.body.data.attributes;
+          console.log(task);
           setFormData({
             taskCode: task.task_code_id,
             taskName: task.task_name,
@@ -88,8 +97,9 @@ const CreateUpdateTask = (props) => {
             actualSpent: task.actual_spent,
             percentageComplete: task.percentage_complete,
             filesUrls: task.files_urls,
-          });}
-        )
+            task_original_id: response.data.body.data.id,
+          });
+        })
         .catch((error) => {
           console.log(error);
         });
@@ -105,6 +115,27 @@ const CreateUpdateTask = (props) => {
     priority: z.string().nonempty({ message: "Priority is required" }),
   });
 
+  const updateTasksLocal = () => {
+    if (selectedProject) {
+      axios
+        .get(
+          `${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        )
+        .then((response) => {
+          localStorage.setItem(
+            "projectTasks",
+            JSON.stringify(response.data.body.data)
+          );
+        })
+        .catch((error) => {
+          console.error("Error fetching tasks:", error);
+        });
+    }
+  };
+
   const handleInputChange = (event) => {
     setFormData({ ...formData, [event.target.id]: event.target.value });
   };
@@ -116,16 +147,39 @@ const CreateUpdateTask = (props) => {
       // formDataSchema.parse(formData);
       if (formType === "update") {
         axios
-          .put(`${network.onlineUrl}api/task/${taskId}`, formData, {
-            headers: {
-              "Authorization": `Bearer ${network.token}`,
+          .put(
+            `${network.onlineUrl}api/task/${taskId}`,
+            {
+              data: {
+                type: "string",
+                id: formData.task_original_id,
+                attributes: {
+                  task_code_id: formData.taskCode,
+                  task_name: formData.taskName,
+                  description: formData.description,
+                  start_date: formData.startDate ? new Date(formData.startDate) : null,
+                  end_date: formData.endDate ? new Date(formData.endDate) : null,
+                  task_owner_id: formData.taskOwnerId,
+                  business_id: formData.businessId,
+                  status: formData.status,
+                  notes: formData.notes,
+                  budget_estimated: formData.estimatedBudget,
+                  actual_spent: formData.actualSpent,
+                  percentage_complete: formData.percentageComplete,
+                  files_urls: formData.files_urls,
+                },
+              },
             },
-          })
+            {
+              headers: {
+                Authorization: `Bearer ${network.token}`,
+              },
+            }
+          )
           .then((response) => {
             if (response.status === 200) {
               console.log("Task updated successfully");
-              setFormData({
-              });
+              updateTasksLocal();
             }
             console.log(response);
           })
@@ -136,14 +190,13 @@ const CreateUpdateTask = (props) => {
         axios
           .post(`${network.onlineUrl}api/task`, formData, {
             headers: {
-              "Authorization": `Bearer ${network.token}`,
+              Authorization: `Bearer ${network.token}`,
             },
           })
           .then((response) => {
             if (response.status === 200) {
               console.log("Task created successfully");
-              setFormData({
-              });
+              setFormData({});
             }
             console.log(response);
           })
@@ -151,8 +204,6 @@ const CreateUpdateTask = (props) => {
             console.log(error);
           });
       }
-
-     
     } catch (error) {
       console.log(error);
     }
@@ -223,29 +274,28 @@ const CreateUpdateTask = (props) => {
                   value={formData.taskName}
                 />
               </div>
-              
+
               <div className="mb-4">
                 <label htmlFor="startDate" className="form-label">
                   Start Date
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   className="form-control"
                   id="startDate"
                   onChange={handleInputChange}
-                  value={formData.startDate}
-                />
+                  value={formData.startDate ? format(new Date(formData.startDate), "yyyy-MM-dd'T'HH:mm") : null}                />
               </div>
               <div className="mb-4">
                 <label htmlFor="endDate" className="form-label">
                   End Date
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   className="form-control"
                   id="endDate"
                   onChange={handleInputChange}
-                  value={formData.endDate}
+                  value={formData.endDate ? format(new Date(formData.endDate), "yyyy-MM-dd'T'HH:mm") : null}
                 />
               </div>
               <div className="mb-4">
@@ -346,38 +396,39 @@ const CreateUpdateTask = (props) => {
                   value={formData.actualSpent}
                 />
               </div>
-              
+
               <div className="mb-4">
-  <label htmlFor="filesUrls" className="form-label">
-    Files URLs
-  </label>
-  <FilePond
-    className="multiple-filepond"
-    acceptedFileTypes={[
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-      "image/gif",
-    ]}
-    server={{
-      url: `${network.onlineUrl}api/upload`,
-      process: {
-        headers: {
-          Authorization: `Bearer ${network.token}`,
-        },
-        onload: (response) => handleFileUpload(JSON.parse(response)),
-      },
-    }}
-    allowReorder={true}
-    files={files}
-    onupdatefiles={setFiles}
-    allowMultiple={true}
-    allowImagePreview={true}
-    maxFiles={10}
-    name="files"
-    labelIdle='Drag & Drop your files or <span className="filepond--label-action">Browse</span>'
-  />
-</div>
+                <label htmlFor="filesUrls" className="form-label">
+                  Files URLs
+                </label>
+                <FilePond
+                  className="multiple-filepond"
+                  acceptedFileTypes={[
+                    "application/pdf",
+                    "image/png",
+                    "image/jpeg",
+                    "image/gif",
+                  ]}
+                  server={{
+                    url: `${network.onlineUrl}api/upload`,
+                    process: {
+                      headers: {
+                        Authorization: `Bearer ${network.token}`,
+                      },
+                      onload: (response) =>
+                        handleFileUpload(JSON.parse(response)),
+                    },
+                  }}
+                  allowReorder={true}
+                  files={files}
+                  onupdatefiles={setFiles}
+                  allowMultiple={true}
+                  allowImagePreview={true}
+                  maxFiles={10}
+                  name="files"
+                  labelIdle='Drag & Drop your files or <span className="filepond--label-action">Browse</span>'
+                />
+              </div>
             </div>
             <button className="ti-btn ti-btn-primary-full" type="submit">
               {formType === "update" ? "Update Task" : "Create Task"}
