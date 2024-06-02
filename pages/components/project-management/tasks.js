@@ -62,10 +62,6 @@ const ViewTasks = () => {
         row.attributes.end_date ? format(new Date(row.attributes.end_date), "dd-MMM-yyyy") : null,
     },
     {
-      Header: "Task Owner ID",
-      accessor: "attributes.task_owner_id",
-    },
-    {
       Header: "Business ID",
       accessor: "attributes.business_id",
     },

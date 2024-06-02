@@ -157,8 +157,12 @@ const CreateUpdateTask = (props) => {
                   task_code_id: formData.taskCode,
                   task_name: formData.taskName,
                   description: formData.description,
-                  start_date: formData.startDate ? new Date(formData.startDate) : null,
-                  end_date: formData.endDate ? new Date(formData.endDate) : null,
+                  start_date: formData.startDate
+                    ? new Date(formData.startDate)
+                    : null,
+                  end_date: formData.endDate
+                    ? new Date(formData.endDate)
+                    : null,
                   task_owner_id: formData.taskOwnerId,
                   business_id: formData.businessId,
                   status: formData.status,
@@ -188,13 +192,42 @@ const CreateUpdateTask = (props) => {
           });
       } else {
         axios
-          .post(`${network.onlineUrl}api/task`, formData, {
-            headers: {
-              Authorization: `Bearer ${network.token}`,
+          .post(
+            `${network.onlineUrl}api/task`,
+            {
+              data: {
+                type: "string",
+
+                attributes: {
+                  task_code:   Number(formData.taskCode),
+                  project: selectedProject.id,
+                  task_name: formData.taskName,
+                  description: formData.description,
+                  start_date: formData.startDate
+                    ? new Date(formData.startDate)
+                    : null,
+                  end_date: formData.endDate
+                    ? new Date(formData.endDate)
+                    : null,
+                  task_owner_id: formData.taskOwnerId,
+                  business_id: formData.businessId,
+                  status: formData.status,
+                  notes: formData.notes,
+                  budget_estimated: formData.estimatedBudget,
+                  actual_spent: formData.actualSpent,
+                  percentage_complete: formData.percentageComplete,
+                  files_urls: formData.files_urls,
+                },
+              },
             },
-          })
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
           .then((response) => {
-            if (response.status === 200) {
+            if (response.data.status === 200) {
               console.log("Task created successfully");
               setFormData({});
             }
@@ -284,7 +317,15 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="startDate"
                   onChange={handleInputChange}
-                  value={formData.startDate ? format(new Date(formData.startDate), "yyyy-MM-dd'T'HH:mm") : null}                />
+                  value={
+                    formData.startDate
+                      ? format(
+                          new Date(formData.startDate),
+                          "yyyy-MM-dd'T'HH:mm"
+                        )
+                      : null
+                  }
+                />
               </div>
               <div className="mb-4">
                 <label htmlFor="endDate" className="form-label">
@@ -295,7 +336,11 @@ const CreateUpdateTask = (props) => {
                   className="form-control"
                   id="endDate"
                   onChange={handleInputChange}
-                  value={formData.endDate ? format(new Date(formData.endDate), "yyyy-MM-dd'T'HH:mm") : null}
+                  value={
+                    formData.endDate
+                      ? format(new Date(formData.endDate), "yyyy-MM-dd'T'HH:mm")
+                      : null
+                  }
                 />
               </div>
               <div className="mb-4">
@@ -396,7 +441,8 @@ const CreateUpdateTask = (props) => {
                   value={formData.actualSpent}
                 />
               </div>
-
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               <div className="mb-4">
                 <label htmlFor="filesUrls" className="form-label">
                   Files URLs
@@ -430,9 +476,14 @@ const CreateUpdateTask = (props) => {
                 />
               </div>
             </div>
-            <button className="ti-btn ti-btn-primary-full" type="submit">
-              {formType === "update" ? "Update Task" : "Create Task"}
-            </button>
+            <div className="box-footer">
+              <button
+                type="submit"
+                className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
+              >
+                {formType === "update" ? "Update Task" : "Create Task"}
+              </button>
+            </div>
           </form>
         </div>
       </div>

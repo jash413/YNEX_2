@@ -14,63 +14,74 @@ const ChangeOrders = () => {
   const [completedChangeOrders, setCompletedChangeOrders] = useState(0);
   const [pendingChangeOrders, setPendingChangeOrders] = useState(0);
   const [inProgressChangeOrders, setInProgressChangeOrders] = useState(0);
+  const Users =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("Users"))
+      : null;
   const COLUMNS = [
     {
       Header: "Active",
-      accessor: "active",
+      accessor: "attributes.active",
     },
     {
-      Header: "Project ID",
-      accessor: "project_id",
-    },
-    {
-      Header: "Creator ID",
-      accessor: "creator_id",
+      Header: "Creator",
+      accessor: "attributes.creator_id",
+      Cell: ({ value }) => {
+        const user = Users.find(user => user.id == value);
+        return user ? user.attributes.username : '';
+      },
     },
     {
       Header: "Description",
-      accessor: "description",
+      accessor: "attributes.description",
     },
     {
       Header: "Amount",
-      accessor: "amount",
+      accessor: "attributes.amount",
     },
     {
       Header: "Status",
-      accessor: "status",
+      accessor: "attributes.status",
     },
     {
       Header: "Notes",
-      accessor: "notes",
-      //show as bullets
+      accessor: "attributes.notes",
       Cell: ({ value }) => (
-        <ol>
-          {value.map((note) => (
-            <li>{note}</li>
-          ))}
-        </ol>
+        <ul>
+          {value &&
+            value.length > 0 &&
+            value.map((note, index) => <li key={index}>{note}</li>)}
+        </ul>
       ),
     },
     {
       Header: "Increase Budget",
-      accessor: "increaase_budget",
+      accessor: "attributes.increaase_budget",
     },
     {
       Header: "Payment Terms",
-      accessor: "payment_terms",
+      accessor: "attributes.payment_terms",
     },
     {
       Header: "Reviewed By",
-      accessor: "reviewed_by",
+      accessor: "attributes.reviewed_by",
+      Cell: ({ value }) => {
+        const user = Users.find(user => user.id == value);
+        return user ? user.attributes.username : '';
+      }
     },
     {
       Header: "Approved By",
-      accessor: "approved_by",
+      accessor: "attributes.approved_by",
+      Cell: ({ value }) => {
+        const user = Users.find(user => user.id == value);
+        return user ? user.attributes.username : '';
+      }
     },
     {
       Header: "Document URLs",
-      accessor: "document_urls",
-      Cell: ({ value }) => value.join(", "), // Optional cell formatter to join URLs array
+      accessor: "attributes.document_urls",
+      Cell: ({ value }) => (value ? value.join(", ") : ""),
     },
   ];
 
@@ -98,10 +109,12 @@ const ChangeOrders = () => {
   };
   const getChangeOrders = () => {
     if (
-      localStorage.getItem("purchaseOrders") !== null &&
-      localStorage.getItem("purchaseOrders") !== "undefined"
+      localStorage.getItem("projectChangeOrders") !== null &&
+      localStorage.getItem("projectChangeOrders") !== "undefined"
     ) {
-      const changeOrders = JSON.parse(localStorage.getItem("purchaseOrders"));
+      const changeOrders = JSON.parse(
+        localStorage.getItem("projectChangeOrders")
+      );
       setChangeOrders(changeOrders);
     }
   };

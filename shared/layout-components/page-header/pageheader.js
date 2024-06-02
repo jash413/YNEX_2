@@ -69,7 +69,7 @@ const Pageheader = ({
 
       if (newSelectedProject) {
         const projectId = newSelectedProject.id;
-        const [tasksResponse, changeOrdersResponse] = await Promise.all([
+        const [tasksResponse, changeOrdersResponse, progressionNotesResponse, userResponse] = await Promise.all([
           axios.get(
             `${network.onlineUrl}api/task?filter[project]=${projectId}`,
             {
@@ -82,6 +82,13 @@ const Pageheader = ({
               headers: { Authorization: `Bearer ${token}` },
             }
           ),
+          axios.get(`${network.onlineUrl}api/progression_Notes?filter[project]=${projectId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+          ),
+          axios.get(`${network.onlineUrl}api/user`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
         localStorage.setItem(
@@ -92,6 +99,15 @@ const Pageheader = ({
           "projectChangeOrders",
           JSON.stringify(changeOrdersResponse.data.body.data)
         );
+        localStorage.setItem(
+          "projectProgressionNotes",
+          JSON.stringify(progressionNotesResponse.data.body.data)
+        );
+        localStorage.setItem(
+          "Users",
+          JSON.stringify(userResponse.data.body.data)
+        );
+
       }
 
       loadProjectData();
