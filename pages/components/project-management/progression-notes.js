@@ -62,8 +62,7 @@ const ProgressionNotes = () => {
                     className="chatnameperson responsive-userinfo-open !text-defaulttextcolor dark:text-defaulttextcolor/70"
                   >
                      {
-    (Users.filter(user => user.id == userid)[0] || {}).attributes?.username
-  }
+(Users && Users.length > 0 ? Users.filter(user => user.id == userid)[0] : {})?.attributes?.username  }
                   </Link>
                 </p>
               </div>
@@ -83,8 +82,7 @@ const ProgressionNotes = () => {
                         <span className="chatting-user-info">
                         <span className="chatnameperson">
   {
-    (Users.filter(user => user.id === note.attributes.user_id)[0] || {}).attributes?.username
-  }
+(Users && Users.length > 0 ? Users.filter(user => user.id == userid)[0] : {})?.attributes?.username  }
 </span>
                           <span className="msg-sent-time">
                             {" "}
