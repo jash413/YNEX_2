@@ -158,7 +158,7 @@ const Specifications = () => {
         ))}
       </div>
       <div id="add-task" className="hs-overlay hidden ti-modal">
-        <div className="hs-overlay-open:mt-7 ti-modal-box mt-0 ease-out">
+        <div className="hs-overlay-open:mt-7 ti-modal-box mt-0 ease-out lg:!max-w-4xl lg:w-full m-3 lg:!mx-auto">
           <div className="ti-modal-content">
             <div className="ti-modal-header">
               <h6
