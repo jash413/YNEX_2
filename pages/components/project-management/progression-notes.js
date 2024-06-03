@@ -61,8 +61,12 @@ const ProgressionNotes = () => {
                     href="#!"
                     className="chatnameperson responsive-userinfo-open !text-defaulttextcolor dark:text-defaulttextcolor/70"
                   >
-                     {
-(Users && Users.length > 0 ? Users.filter(user => user.id == userid)[0] : {})?.attributes?.username  }
+                    {
+                      (Users && Users.length > 0
+                        ? Users.filter((user) => user.id == userid)[0]
+                        : {}
+                      )?.attributes?.username
+                    }
                   </Link>
                 </p>
               </div>
@@ -74,35 +78,40 @@ const ProgressionNotes = () => {
                 <li className="chat-day-label">
                   <span>Today</span>
                 </li>
-                {progressionNotes && progressionNotes.map((note, index) => (
-                  <li className="chat-item-start" key={index}>
-                    <div className="chat-list-inner">
-                      <div className="chat-user-profile"></div>
-                      <div className="ms-4">
-                        <span className="chatting-user-info">
-                        <span className="chatnameperson">
-  {
-(Users && Users.length > 0 ? Users.filter(user => user.id == userid)[0] : {})?.attributes?.username  }
-</span>
-                          <span className="msg-sent-time">
-                            {" "}
-                            {format(
-                              new Date(note.attributes.created_at),
-                              "dd MMM yyyy HH:mm"
-                            )}
+                {progressionNotes &&
+                  progressionNotes.map((note, index) => (
+                    <li className="chat-item-start" key={index}>
+                      <div className="chat-list-inner">
+                        <div className="chat-user-profile"></div>
+                        <div className="ms-4">
+                          <span className="chatting-user-info">
+                            <span className="chatnameperson">
+                              {
+                                (Users && Users.length > 0
+                                  ? Users.filter((user) => user.id == userid)[0]
+                                  : {}
+                                )?.attributes?.username
+                              }
+                            </span>
+                            <span className="msg-sent-time">
+                              {" "}
+                              {format(
+                                new Date(note.attributes.created_at),
+                                "dd MMM yyyy HH:mm"
+                              )}
+                            </span>
                           </span>
-                        </span>
-                        <div className="main-chat-msg">
-                          <div>
-                            <p className="mb-0">
-                              {note.attributes.description}
-                            </p>
+                          <div className="main-chat-msg">
+                            <div>
+                              <p className="mb-0">
+                                {note.attributes.description}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  ))}
               </ul>
             </div>
           </PerfectScrollbar>
