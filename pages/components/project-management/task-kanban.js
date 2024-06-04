@@ -66,7 +66,8 @@ const Kanbanboard = () => {
 
       drake.on("drop", (el, target, source, sibling) => {
         const taskId = el.getAttribute("data-task-id");
-        const newStatus = classNameToStatus[target.getAttribute("data-status")];
+        const newStatus = target.getAttribute("data-status");
+
 
         // Send PATCH request to update the status
         axios
