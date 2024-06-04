@@ -12,3 +12,7 @@ const EditProject = () => {
     </>
   );
 }
+
+EditProject.layout = "Contentlayout";
+
+export default EditProject;
