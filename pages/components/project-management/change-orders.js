@@ -129,8 +129,8 @@ const ChangeOrders = () => {
     <div>
       <Seo title={"Change Orders"} />
       <Pageheader
-        activepage="Change Orders"
-        mainpage="Orders"
+        activepage={`${selectedProject?.attributes?.name || `Change Orders`}`}
+        mainpage="Change Orders"
         mainpageurl="/components/project-management/change-orders"
         loadProjectData={getProjectDataFromLocalStorage}
         loadUserData={getUserDataFromLocalStorage}

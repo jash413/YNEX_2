@@ -36,19 +36,20 @@ const formDataSchema = z.object({
 const CreateUpdateChangeOrder = (props) => {
   const formType = props.formType;
   const [formData, setFormData] = useState({
-    selectedProject: "",
-    client_name: "", // Client Name
-    assigned_to: [], // Assigned To
+    updatedAt: "",
+    project_id: "",
+    creator_id: "",
+    notes: [],
+    document_urls: [],
+    createdAt: "",
+    active: false,
     description: "",
-    address1: "",
-    address2: "",
-    zipcode: "", // zipcode
-    state: "", // State
-    budget: "", // Price for customer/Budget
-    start_date: "", // Start date
-    end_date: "", // End date
-    customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
-    files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
+    amount: "",
+    status: "",
+    increase_budget: false,
+    payment_terms: "",
+    reviewed_by: "",
+    approved_by: "",
   });
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectTemplate, setSelectTemplate] = useState("");
@@ -56,10 +57,6 @@ const CreateUpdateChangeOrder = (props) => {
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
 
-  const Selectoption1 = [
-    { value: "custom_template", label: "Custom Template" },
-    { value: "remodel_template", label: "Remodel Template" },
-  ];
 
   const handleFileChange = (response) => {
     setFormData({
@@ -97,64 +94,7 @@ const CreateUpdateChangeOrder = (props) => {
     }
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const userid = localStorage.getItem("userid");
 
-    try {
-      // formDataSchema.parse(formData);
-      axios
-        .post(
-          `${network.onlineUrl}api/project`,
-          {
-            data: {
-              type: "string",
-              attributes: {
-                name: formData.name,
-                description: formData.description,
-                address1: formData.address1,
-                address2: formData.address2,
-                zipcode: formData.zipcode,
-                state: formData.state,
-                budget_estimated: Number(formData.budget),
-                home_owner_id: Number(userid),
-                gc_business_id: 101000,
-              },
-            },
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        .then((response) => {
-          console.log(response);
-           setFormData({
-        name: "",
-        client_name: "", // Client Name
-        assigned_to: [], // Assigned To
-        description: "",
-        address1: "",
-        address2: "",
-        zipcode: "", // zipcode
-        state: "", // State
-        budget: "", // Price for customer/Budget
-        start_date: "", // Start date
-        end_date: "", // End date
-        customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
-        files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
-      });
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-
-     
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   return (
     <div>
@@ -162,8 +102,8 @@ const CreateUpdateChangeOrder = (props) => {
         title={`${formType === "update" ? "Update Project" : "Create Project"}`}
       />
       <Pageheader
-        activepage={`${formType === "update" ? "Update" : "Create"} Project`}
-        mainpage="Projects"
+        mainpage={`${formType === "update" ? "Update" : "Create"} Project`}
+        activepage={`${selectedProject?.attributes?.name || `Project Summary`}`}
         mainpageurl="/components/project-management/project-summary/"
         loadProjectData={getDataFromLocalStorage}
         createProject={false}

@@ -47,7 +47,7 @@ const CreateUpdateTask = (props) => {
     taskOwnerId: null,
     businessId: null,
     status: null,
-    notes: null,
+    notes: [],
     estimatedBudget: null,
     actualSpent: null,
     percentageComplete: null,
@@ -137,7 +137,9 @@ const CreateUpdateTask = (props) => {
   };
 
   const handleInputChange = (event) => {
-    setFormData({ ...formData, [event.target.id]: event.target.value });
+    const { id, value } = event.target;
+    const updatedValue = id === 'notes' ? value.split('\n') : value;
+    setFormData({ ...formData, [id]: updatedValue });
   };
 
   const handleSubmit = (event) => {
@@ -196,11 +198,11 @@ const CreateUpdateTask = (props) => {
             `${network.onlineUrl}api/task`,
             {
               data: {
-                type: "string",
+                type: "task",
 
                 attributes: {
-                  task_code:   Number(formData.taskCode),
-                  project: selectedProject.id,
+                  project_id: selectedProject.id,
+                  task_code_id:   Number(formData.taskCode),
                   task_name: formData.taskName,
                   description: formData.description,
                   start_date: formData.startDate
@@ -227,8 +229,9 @@ const CreateUpdateTask = (props) => {
             }
           )
           .then((response) => {
-            if (response.data.status === 200) {
+            if (response.data.status === 201) {
               console.log("Task created successfully");
+              updateTasksLocal();
               setFormData({});
             }
             console.log(response);
@@ -266,8 +269,8 @@ const CreateUpdateTask = (props) => {
     <div>
       <Seo title={`${formType === "update" ? "Update Task" : "Create Task"}`} />
       <Pageheader
-        activepage={`${formType === "update" ? "Update" : "Create"} Task`}
-        mainpage="Tasks"
+        mainpage={`${formType === "update" ? "Update" : "Create"} Task`}
+        activepage={`${selectedProject?.attributes?.name || `Project Summary`}`}
         mainpageurl="/components/project-management/tasks"
         loadProjectData={getDataFromLocalStorage}
       />
@@ -414,8 +417,8 @@ const CreateUpdateTask = (props) => {
                   rows="3"
                   cols="50"
                   onChange={handleInputChange}
-                  value={formData.notes}
-                />
+                  value={formData.notes?.join('\n')}
+                  />
               </div>
               <div className="mb-4">
                 <label htmlFor="estimatedBudget" className="form-label">
