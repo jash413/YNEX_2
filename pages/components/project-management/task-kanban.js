@@ -104,7 +104,7 @@ const Kanbanboard = () => {
 
     OnDivChange();
   }
-  }, [window]);
+  }, [token]);
 
   const getDataFromLocalStorage = () => {
     const selectedProject = localStorage.getItem("selectedProject");
@@ -170,7 +170,7 @@ const Kanbanboard = () => {
             <div
               className={`kanban-column kanban-tasks-type ${statusToClassName[status]}`}
               key={status}
-              data-status={statusToClassName[status]}
+              data-status={status}
             >
               <div className="mb-4">
                 <div className="flex justify-between items-center">
