@@ -1,6 +1,107 @@
 const specifications = [
   {
     projectId: 200001,
+    title: "Masonry Stucco Specifications",
+    "SPECIFICATION DESCRIPTION":
+      "Vendor to supply all materials and / or labor for the following:",
+    sections: [
+      {
+        sectionName: "Exterior Wall Finish",
+        fields: [
+          {
+            attributeName: "perPlan",
+            label: "Per Plan?",
+            inputType: "radio",
+            options: [
+              { value: "yes", label: "Yes" },
+              { value: "no", label: "No" },
+            ],
+          },
+          {
+            attributeName: "type",
+            label: "Type",
+            inputType: "radio",
+            options: [
+              { value: "trueStucco", label: "True Stucco" },
+              { value: "brick", label: "Brick" },
+              { value: "culturedStone", label: "Cultured Stone" },
+              { value: "other", label: "Other" },
+              { value: "EIFSStyleAndColor", label: "EIFS Style & Color" },
+            ],
+          },
+          {
+            attributeName: "other",
+            label: "___________________________________",
+            inputType: "text",
+          },
+          {
+            attributeName: "EIFSStyleAndColor",
+            label: "___________________________________",
+            inputType: "text",
+          },
+        ],
+      },
+      {
+        sectionName: "Special Materials",
+        fields: [
+          {
+            attributeName: "specialMaterials",
+            label: "Special Materials",
+            inputType: "radio",
+            options: [
+              { value: "yes", label: "Yes" },
+              { value: "no", label: "No" },
+            ],
+          },
+        ],
+      },
+
+      {
+        sectionName: "Details, if other than per plan",
+        fields: [
+          {
+            attributeName: "deviations",
+            label: "Deviations",
+            inputType: "text",
+            placeholder: "Details, if other than per plan",
+          },
+        ],
+      },
+      {
+        sectionName: "Fireplace",
+        fields: [
+          {
+            attributeName: "fireplace",
+            label: "Fireplace",
+            inputType: "radio",
+            options: [
+              { value: "insert", label: "Insert" },
+              { value: "zeroClearance", label: "Zero clearance" },
+              { value: "fullMasonry", label: "Full Masonry" },
+              { value: "withMasonryHearth", label: "With masonry hearth" },
+              { value: "withMasonryMantel", label: "With Masonry Mantel" },
+            ],
+          },
+        ],
+      },
+      {
+        sectionName: "Facing",
+        fields: [
+          {
+            attributeName: "facing",
+            label: "Facing",
+            inputType: "radio",
+            options: [
+              { value: "fullHeight", label: "Full Height" },
+              { value: "mantelHeight", label: "Mantel Height" },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    projectId: 200001,
     title: "Home Utilities Setup",
     sections: [
       {
