@@ -162,7 +162,7 @@ const ViewTasks = () => {
       </div>
       <Seo title={"Tasks"} />
       <Pageheader
-        activepage="View Tasks"
+        activepage={`${selectedProject?.attributes?.name || `Tasks`}`}
         mainpage="Tasks"
         mainpageurl="/components/project-management/tasks"
         loadProjectData={getProjectDataFromLocalStorage}

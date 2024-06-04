@@ -116,8 +116,8 @@ const PurchaseOrders = () => {
     <div>
       <Seo title={"Purchase Orders"} />
       <Pageheader
-        activepage="Purchase Orders"
-        mainpage="Orders"
+        activepage={`${selectedProject?.attributes?.name || `Purchase Orders`}`}
+        mainpage="Purchase Orders"
         mainpageurl="/components/project-management/purchase-orders"
         loadProjectData={getProjectDataFromLocalStorage}
         loadUserData={getUserDataFromLocalStorage}

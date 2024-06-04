@@ -16,6 +16,7 @@ const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import network from "@/config";
 import { set } from "date-fns";
+import { h } from "gridjs";
 
 const formDataSchema = z.object({
   selectedProject: z.string(),
@@ -37,7 +38,6 @@ const CreateUpdateProject = (props) => {
   const formType = props.formType;
   const [formData, setFormData] = useState({
     selectedProject: "",
-    client_name: "", // Client Name
     assigned_to: [], // Assigned To
     description: "",
     address1: "",
@@ -47,9 +47,9 @@ const CreateUpdateProject = (props) => {
     budget: "", // Price for customer/Budget
     start_date: "", // Start date
     end_date: "", // End date
-    customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
-    files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
-  });
+    customer_invite: "", 
+    exception_notes : "",
+    files: [],  });
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectTemplate, setSelectTemplate] = useState("");
   const [multiselectdata, setMultiselectdata] = useState([]);
@@ -62,6 +62,27 @@ const CreateUpdateProject = (props) => {
   ];
 
   const handleFileChange = (response) => {
+    axios.patch(`${network.onlineUrl}api/file/${response[0].id}`, {
+      data:{
+        type: "file",
+      attributes: {
+        project_id: selectedProject.id,
+      }
+    },
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((response) => {
+      console.log(response);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  
+
+
     setFormData({
       ...formData,
       files: [...formData.files, response[0].file_url],
@@ -77,6 +98,35 @@ const CreateUpdateProject = (props) => {
 
   useEffect(() => {
     getDataFromLocalStorage();
+    if(props.formType === "update"){
+      axios.get(`${network.onlineUrl}api/project/${selectedProject.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        const project = response.data.data;
+        setFormData({
+          selectedProject: project.id,
+          assigned_to: project.attributes.assigned_to,
+          description: project.attributes.description,
+          address1: project.attributes.address1,
+          address2: project.attributes.address2,
+          zipcode: project.attributes.zipcode,
+          state: project.attributes.state,
+          budget: project.attributes.budget_estimated,
+          start_date: project.attributes.start_date,
+          end_date: project.attributes.end_date,
+          customer_invite: project.attributes.customer_invite,
+          exception_notes : project.attributes.exception_notes,
+          selectTemplate: project.attributes.project_type,
+          files: project.attributes.document_urls,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    }
   }, []);
 
   const handleInputChange = (event) => {
@@ -101,8 +151,63 @@ const CreateUpdateProject = (props) => {
     event.preventDefault();
     const userid = localStorage.getItem("userid");
 
-    try {
-      // formDataSchema.parse(formData);
+    if(props.formType === "update"){
+
+      axios
+        .patch(
+          `${network.onlineUrl}api/project`,
+          {
+            data: {
+              type: "string",
+              attributes: {
+                name: formData.name,
+                description: formData.description,
+                address1: formData.address1,
+                address2: formData.address2,
+                zipcode: formData.zipcode,
+                state: formData.state,
+                budget_estimated: Number(formData.budget),
+                home_owner_id: Number(userid),
+                gc_business_id: 101000,
+                project_type: selectTemplate,
+                exception_notes : formData.exception_notes,
+                start_date: formData.start_date,
+                end_date: formData.end_date,
+                document_urls: formData.files,
+              },
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        .then((response) => {
+          console.log(response);
+           setFormData({
+        name: "",
+        assigned_to: [], // Assigned To
+        description: "",
+        address1: "",
+        address2: "",
+        zipcode: "", // zipcode
+        state: "", // State
+        budget: "", // Price for customer/Budget
+        exception_notes : "",
+        start_date: "", // Start date
+        end_date: "", // End date
+        customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
+        files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
+      });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+      }
+
+    if(props.formType === "create") { 
+      
       axios
         .post(
           `${network.onlineUrl}api/project`,
@@ -119,6 +224,11 @@ const CreateUpdateProject = (props) => {
                 budget_estimated: Number(formData.budget),
                 home_owner_id: Number(userid),
                 gc_business_id: 101000,
+                project_type: selectTemplate,
+                exception_notes : formData.exception_notes,
+                start_date: formData.start_date,
+                end_date: formData.end_date,
+                document_urls: formData.files,
               },
             },
           },
@@ -132,7 +242,6 @@ const CreateUpdateProject = (props) => {
           console.log(response);
            setFormData({
         name: "",
-        client_name: "", // Client Name
         assigned_to: [], // Assigned To
         description: "",
         address1: "",
@@ -140,6 +249,7 @@ const CreateUpdateProject = (props) => {
         zipcode: "", // zipcode
         state: "", // State
         budget: "", // Price for customer/Budget
+        exception_notes : "",
         start_date: "", // Start date
         end_date: "", // End date
         customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
@@ -151,10 +261,9 @@ const CreateUpdateProject = (props) => {
         });
 
      
-    } catch (error) {
-      console.log(error);
     }
   };
+
 
   return (
     <div>
@@ -186,7 +295,7 @@ const CreateUpdateProject = (props) => {
                   <div className="grid grid-cols-12 gap-4">
                     <div className="xl:col-span-4 col-span-12">
                       <label htmlFor="template" className="form-label">
-                        Select Template :
+                        Select Type :
                       </label>
                       <Select
                         required
@@ -214,21 +323,19 @@ const CreateUpdateProject = (props) => {
                         onChange={handleInputChange}
                       />
                     </div>
-                    {/* input field for Client Name */}
                     <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="client_name" className="form-label">
-                        Client Name :
-                      </label>
-                      <input
+                      <label className="form-label">Exception Notes</label>
+                      <input 
                         required
                         type="text"
                         className="form-control"
-                        id="client_name"
-                        placeholder="Enter Client Name"
-                        value={formData.client_name}
+                        id="exception_notes"
+                        placeholder="Enter Exception Notes"
+                        value={formData.exception_notes}
                         onChange={handleInputChange}
                       />
                     </div>
+              
 
                     {/* input field for Budget */}
                     <div className="xl:col-span-6 col-span-12">
@@ -237,7 +344,7 @@ const CreateUpdateProject = (props) => {
                       </label>
                       <input
                         required
-                        type="text"
+                        type="number"
                         className="form-control"
                         id="budget"
                         placeholder="Enter Budget"
@@ -245,7 +352,7 @@ const CreateUpdateProject = (props) => {
                         onChange={handleInputChange}
                       />
                     </div>
-                    {/* input field for Project Address */}
+                    
                     {/* input field for Project address line one*/}
                     <div className="xl:col-span-6 col-span-12">
                       <label htmlFor="project_address" className="form-label">
@@ -279,11 +386,11 @@ const CreateUpdateProject = (props) => {
                     {/* input field for zipcode */}
                     <div className="xl:col-span-6 col-span-12">
                       <label htmlFor="zipcode" className="form-label">
-                        zipcode :
+                        Zipcode :
                       </label>
                       <input
                         required
-                        type="text"
+                        type="number"
                         className="form-control"
                         id="zipcode"
                         placeholder="Enter zipcode"
@@ -306,6 +413,8 @@ const CreateUpdateProject = (props) => {
                         onChange={handleInputChange}
                       />
                     </div>
+                    
+
                     <div className="xl:col-span-6 col-span-12">
                       <label className="form-label">Assigned To</label>
                       <Select
