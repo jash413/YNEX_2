@@ -69,7 +69,7 @@ const Pageheader = ({
 
       if (newSelectedProject) {
         const projectId = newSelectedProject.id;
-        const [tasksResponse, changeOrdersResponse, progressionNotesResponse, userResponse, specificationsResponse] = await Promise.all([
+        const [tasksResponse, changeOrdersResponse, progressionNotesResponse, userResponse, gcBuisnessResponse, specificationsResponse] = await Promise.all([
           axios.get(
             `${network.onlineUrl}api/task?filter[project]=${projectId}`,
             {
@@ -89,7 +89,11 @@ const Pageheader = ({
           axios.get(`${network.onlineUrl}api/user`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`${network.vercelUrl}api/specifications/${projectId}`),
+          axios.get(`${network.onlineUrl}api/business?filter[type]=GC`, 
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`/api/specifications/${projectId}`),
         ]);
 
         localStorage.setItem(
@@ -107,6 +111,10 @@ const Pageheader = ({
         localStorage.setItem(
           "Users",
           JSON.stringify(userResponse.data.body.data)
+        );
+        localStorage.setItem(
+          "gcBuisness",
+          JSON.stringify(gcBuisnessResponse.data.body.data)
         );
         localStorage.setItem(
           "projectSpecifications",

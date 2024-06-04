@@ -2,6 +2,7 @@ import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Seo from "@/shared/layout-components/seo/seo";
 import { useEffect, useState } from "react";
 import { ResponsiveDataTable } from "@/shared/data/tables/datatabledata";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import React from "react";
 import { Cell } from "gridjs";
@@ -19,6 +20,22 @@ const ChangeOrders = () => {
       ? JSON.parse(localStorage.getItem("Users"))
       : null;
   const COLUMNS = [
+    {
+      Header: "Action",
+      accessor: "attributes.action_task_id",
+      Cell: ({ row: { original } }) => (
+        <div className="flex justify-center space-x-2">
+          <Link
+            href={`/components/project-management/edit-changeorder/${original.id}`}
+          >
+            <i className="ri-pencil-fill"></i>
+          </Link>
+          {/* <Link href={`/components/project-management/delete-task/${original.task_code_id}`}>
+              <i className="ri-delete-bin-6-fill"></i>
+          </Link> */}
+        </div>
+      ),
+    },
     {
       Header: "Active",
       accessor: "attributes.active",
@@ -211,6 +228,19 @@ const ChangeOrders = () => {
           <div className="box">
             <div className="box-header">
               <h5 className="box-title">ChangeOrders Table</h5>
+              <div className="display-flex justify-content-end">
+              <button
+                  type="button"
+                  className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !text-[0.75rem]"
+                  data-hs-overlay="#create-changeorder"
+                >
+                  <Link href="/components/project-management/create-changeorder/">
+                    <i className="ri-add-line font-semibold align-middle"></i>{" "}
+                    Create Change Order
+                  </Link>
+                </button>
+                
+                </div>
             </div>
             <div className="box-body space-y-3">
               <div className="overflow-hidden">
