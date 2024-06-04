@@ -69,7 +69,7 @@ const Pageheader = ({
 
       if (newSelectedProject) {
         const projectId = newSelectedProject.id;
-        const [tasksResponse, changeOrdersResponse, progressionNotesResponse, userResponse] = await Promise.all([
+        const [tasksResponse, changeOrdersResponse, progressionNotesResponse, userResponse, specificationsResponse] = await Promise.all([
           axios.get(
             `${network.onlineUrl}api/task?filter[project]=${projectId}`,
             {
@@ -89,6 +89,7 @@ const Pageheader = ({
           axios.get(`${network.onlineUrl}api/user`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          axios.get(`${network.vercelUrl}api/specifications/${projectId}`),
         ]);
 
         localStorage.setItem(
@@ -106,6 +107,10 @@ const Pageheader = ({
         localStorage.setItem(
           "Users",
           JSON.stringify(userResponse.data.body.data)
+        );
+        localStorage.setItem(
+          "projectSpecifications",
+          JSON.stringify(specificationsResponse.data)
         );
 
       }
