@@ -89,7 +89,7 @@ const Pageheader = ({
           axios.get(`${network.onlineUrl}api/user`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`api/specifications/${projectId}`),
+          axios.get(`${network.vercelUrl}api/specifications/${projectId}`),
         ]);
 
         localStorage.setItem(
