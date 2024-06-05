@@ -137,114 +137,165 @@ const Specifications = () => {
       }
 
       const doc = new jsPDF();
-      let yPos = 20;
       const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 10;
-      const cellPadding = 2;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
       const lineHeight = 7;
+      let yPos = 15;
+
+      const getFieldValue = (form, field) => {
+        try {
+          return formData[form.title]?.[field.attributeName];
+        } catch {
+          return field.inputType === "checkbox" ? {} : "";
+        }
+      };
+
+      const drawText = (text, x, y, options = {}) => {
+        try {
+          doc.text(text, x, y, options);
+        } catch (e) {
+          console.error(`Error drawing text: ${text}`, e);
+        }
+      };
+
+      const handleOptionField = (field, value, xPos, yPos) => {
+        const boxSize = 4;
+        const boxMargin = 1;
+
+        field.options.forEach((option) => {
+          const optionValue = option.value.toString();
+          const isChecked =
+            field.inputType === "checkbox"
+              ? value?.[`${field.attributeName}-${optionValue}`] || false
+              : value?.split("-").pop() === optionValue;
+
+          // Draw the box
+          doc.setDrawColor(0).rect(xPos, yPos - boxSize + 1, boxSize, boxSize);
+
+          // Draw tick (✓) inside the box if selected
+          if (isChecked) {
+            doc
+              .setDrawColor(0)
+              .setFillColor(0)
+              .rect(xPos, yPos - boxSize + 1, boxSize, boxSize, "F");
+          }
+
+          // Draw the label
+          drawText(option.label, xPos + boxSize + boxMargin + 1, yPos);
+
+          xPos += doc.getTextWidth(option.label) + boxSize + boxMargin + 15;
+          if (xPos > pageWidth - margin - 50) {
+            xPos = margin;
+            yPos += lineHeight + 3;
+          }
+        });
+        return yPos;
+      };
 
       selectedSpecification.forEach((form, formIndex) => {
         if (formIndex > 0) {
           doc.addPage();
-          yPos = 20;
+          yPos = 15;
         }
 
-        doc
-          .setFontSize(18)
-          .setFont(undefined, "bold")
-          .text(form.title, margin, yPos);
-        yPos += 15;
-
-        form.sections.forEach((section) => {
+        try {
           doc
+            .setDrawColor(0)
+            .setFillColor(255, 250, 205)
+            .rect(margin, yPos, pageWidth - 2 * margin, 15, "F")
             .setFontSize(14)
             .setFont(undefined, "bold")
-            .text(section.sectionName, margin, yPos);
-          yPos += 10;
+            .setTextColor(0)
+            .text(form.title, margin + 5, yPos + 10);
+          yPos += 25;
+        } catch (e) {
+          console.error(`Error adding form header: ${form.title}`, e);
+        }
 
-          doc
-            .setFontSize(12)
-            .setFont(undefined, "normal")
-            .setDrawColor(0)
-            .setFillColor(220, 220, 220)
-            .rect(margin, yPos, pageWidth - 2 * margin, lineHeight, "F")
-            .text(
-              "Field",
-              margin + cellPadding,
-              yPos + lineHeight - cellPadding
-            )
-            .text("Value", pageWidth / 2, yPos + lineHeight - cellPadding);
-          yPos += lineHeight;
+        form.sections.forEach((section) => {
+          try {
+            doc
+              .setFontSize(12)
+              .setFont(undefined, "bold")
+              .text(section.sectionName.toUpperCase() + ":", margin, yPos)
+              .setFont(undefined, "normal");
+            yPos += lineHeight * 1.5;
+          } catch (e) {
+            console.error(`Error adding section: ${section.sectionName}`, e);
+          }
 
           section.fields.forEach((field) => {
-            const value = formData[form.title]?.[field.attributeName];
-            let displayValue = "Not provided";
+            try {
+              const value = getFieldValue(form, field);
+              const label = field.label + ":";
+              const labelWidth = doc.getTextWidth(label);
 
-            if (field.inputType === "checkbox") {
-              const checkedValues = Object.entries(value || {})
-                .filter(([_, isChecked]) => isChecked)
-                .map(([option, _]) => {
-                  const optionValue = option.split("-").pop();
-                  const foundOption = field.options.find(
-                    (opt) => opt.value === optionValue
+              if (
+                field.inputType === "checkbox" ||
+                field.inputType === "radio"
+              ) {
+                drawText(label, margin, yPos + 3);
+                let xPos = margin + labelWidth + 10;
+                yPos = handleOptionField(field, value, xPos, yPos);
+                yPos += lineHeight + 5;
+              } else {
+                drawText(label, margin, yPos + lineHeight - 2);
+                const maxLineWidth = pageWidth - margin - labelWidth - 30;
+
+                doc
+                  .setDrawColor(0)
+                  .line(
+                    margin + labelWidth + 5,
+                    yPos + lineHeight,
+                    pageWidth - margin - 10,
+                    yPos + lineHeight
                   );
-                  return foundOption ? foundOption.label : optionValue;
-                });
-              displayValue =
-                checkedValues.length > 0
-                  ? checkedValues.join(", ")
-                  : "None selected";
-            } else if (field.inputType === "radio") {
-              const optionValue = value?.split("-").pop();
-              const foundOption = field.options.find(
-                (opt) => opt.value === optionValue
-              );
-              displayValue = foundOption
-                ? foundOption.label
-                : value || "Not selected";
-            } else if (value) {
-              displayValue = value;
-            }
 
-            doc
-              .rect(margin, yPos, pageWidth - 2 * margin, lineHeight)
-              .text(
-                field.label,
-                margin + cellPadding,
-                yPos + lineHeight - cellPadding
-              )
-              .text(
-                displayValue,
-                pageWidth / 2,
-                yPos + lineHeight - cellPadding,
-                { maxWidth: pageWidth / 2 - margin - cellPadding }
-              );
-            yPos += lineHeight;
+                const displayValue = value?.toString() || "";
+                drawText(
+                  displayValue,
+                  margin + labelWidth + 10,
+                  yPos + lineHeight - 2,
+                  {
+                    maxWidth: maxLineWidth,
+                  }
+                );
+                yPos += lineHeight + 5;
 
-            // Handle text wrapping for long values
-            const maxWidth = pageWidth / 2 - margin - cellPadding;
-            const textLines = doc.splitTextToSize(displayValue, maxWidth);
-            if (textLines.length > 1) {
-              textLines.slice(1).forEach((line) => {
-                yPos += lineHeight;
-                if (yPos > 280) {
-                  doc.addPage();
-                  yPos = 20;
+                const textLines = doc.splitTextToSize(
+                  displayValue,
+                  maxLineWidth
+                );
+                if (textLines.length > 1) {
+                  textLines.slice(1).forEach((line) => {
+                    yPos += lineHeight;
+                    drawText(
+                      line,
+                      margin + labelWidth + 10,
+                      yPos + lineHeight - 2
+                    );
+                  });
+                  yPos += lineHeight;
                 }
-                doc.text(line, pageWidth / 2, yPos + lineHeight - cellPadding);
-              });
+              }
+
+              if (yPos > pageHeight - 30) {
+                doc.addPage();
+                yPos = 15;
+              }
+            } catch (e) {
+              console.error(`Error adding field: ${field.label}`, e);
             }
           });
 
-          yPos += 10;
-          if (yPos > 280 && formIndex < selectedSpecification.length - 1) {
-            doc.addPage();
-            yPos = 20;
-          }
+          yPos += lineHeight;
         });
       });
 
-      doc.save(`specifications-${selectedProject?.attributes?.name}.pdf`);
+      doc.save(
+        `specifications-${selectedProject?.attributes?.name || "project"}.pdf`
+      );
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("An error occurred while generating the PDF. Please try again.");
