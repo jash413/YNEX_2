@@ -81,7 +81,7 @@ const Specifications = () => {
   }, [getProjectDataFromLocalStorage, updateAllFormsStatus]);
 
   const handleSpecificationClick = (specification) => {
-    setCurrentForm(specification);
+    setCurrentForm(specification); // Update the current form being edited
     setTempFormData((prev) => ({
       ...prev,
       [specification.title]: formData[specification.title] || {},
@@ -108,7 +108,10 @@ const Specifications = () => {
   };
 
   const handleSave = () => {
-    const updatedFormData = { ...formData, ...tempFormData };
+    const updatedFormData = {
+      ...formData,
+      [currentForm.title]: tempFormData[currentForm.title], // Update the current form's data
+    };
     setFormData(updatedFormData);
     updateAllFormsStatus(updatedFormData, selectedSpecification);
     localStorage.setItem("formData", JSON.stringify(updatedFormData));
