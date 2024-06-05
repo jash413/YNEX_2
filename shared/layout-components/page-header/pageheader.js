@@ -120,6 +120,10 @@ const Pageheader = ({
           "projectSpecifications",
           JSON.stringify(specificationsResponse.data)
         );
+        localStorage.setItem(
+          "projectSelections",
+          JSON.stringify(specificationsResponse.data)
+        );
 
       }
 
