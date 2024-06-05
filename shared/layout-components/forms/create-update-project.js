@@ -59,33 +59,35 @@ const CreateUpdateProject = (props) => {
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
   const getSetFiles = async (urls) => {
-    const fetchedFiles = await Promise.all(
-      urls?.map(async (url) => {
-        try {
-          // Get the redirected URL
-          const response = await axios.get(`${network.onlineUrl}api/download_file/?filename=${url}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            maxRedirects: 0, // Prevent following the redirect
-            validateStatus: (status) => status >= 200 && status < 300, // Accept all 2xx status codes
-          });
+    const fetchedFiles = [];
+    for (const url of urls) {
+      try {
+        // Get the redirected URL
+        const response = await axios.get(`${network.onlineUrl}api/download_file/?filename=${url}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          maxRedirects: 0, // Prevent following the redirect
+          validateStatus: (status) => status >= 200 && status < 300, // Accept all 2xx status codes
+        });
+
+        console.log(response.headers);
   
-          // If the response is a redirect, get the redirected URL
-          const redirectedUrl = response.headers.location;
+        // If the response is a redirect, get the redirected URL
+        const redirectedUrl = response.headers.location;
+
   
-          if (redirectedUrl) {
-            return redirectedUrl;
-          } else {
-            console.error(`No redirect URL found for ${url}`);
-          }
-        } catch (error) {
-          console.error(`Error fetching file: ${error}`);
+        if (redirectedUrl) {
+          fetchedFiles.push(redirectedUrl);
+        } else {
+          console.error(`No redirect URL found for ${url}`);
         }
-      })
-    );
+      } catch (error) {
+        console.error(`Error fetching file: ${error}`);
+      }
+    }
   
-    return fetchedFiles.filter((file) => file); // Filter out undefined values
+    return fetchedFiles;
   };
   useEffect(() => {
     if (window !== undefined) {
