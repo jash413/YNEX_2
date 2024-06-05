@@ -21,7 +21,6 @@ import { h } from "gridjs";
 const formDataSchema = z.object({
   selectedProject: z.string(),
   client_name: z.string(),
-  assigned_to: z.array(z.string()),
   description: z.string(),
   address1: z.string(),
   address2: z.string(),
@@ -30,15 +29,15 @@ const formDataSchema = z.object({
   budget: z.number(),
   start_date: z.date(),
   end_date: z.date(),
-  customer_invite: z.string(),
   files: z.array(z.string()),
 });
+
+
 
 const CreateUpdateProject = (props) => {
   const formType = props.formType;
   const [formData, setFormData] = useState({
     selectedProject: "",
-    assigned_to: [], // Assigned To
     description: "",
     address1: "",
     address2: "",
@@ -47,14 +46,64 @@ const CreateUpdateProject = (props) => {
     budget: "", // Price for customer/Budget
     start_date: "", // Start date
     end_date: "", // End date
-    customer_invite: "", 
-    exception_notes : "",
-    files: [],  });
+    exception_notes: "",
+    businessId: "",
+    name: "",
+    files: [],
+  });
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectTemplate, setSelectTemplate] = useState("");
   const [multiselectdata, setMultiselectdata] = useState([]);
+  const [gcBusiness, setGcBuisness] = useState([]);
+
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
+  const getSetFiles = async (urls) => {
+    const fetchedFiles = await Promise.all(
+      urls.map(async (url) => {
+        try {
+          // Get the redirected URL
+          const response = await axios.get(`${network.onlineUrl}api/download_file/?filename=${url}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            maxRedirects: 0, // Prevent following the redirect
+            validateStatus: (status) => status >= 200 && status < 300, // Accept all 2xx status codes
+          });
+  
+          // If the response is a redirect, get the redirected URL
+          const redirectedUrl = response.headers.location;
+          console.log(redirectedUrl);
+  
+          if (redirectedUrl) {
+            // Fetch the file from the redirected URL
+            const fileResponse = await axios.get(redirectedUrl, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              responseType: 'arraybuffer',
+            });
+  
+            const file = new Blob([fileResponse.data], { type: 'application/octet-stream' });
+            const fileName = redirectedUrl.split('/').pop();
+            const fileObject = new File([file], fileName, { type: file.type });
+            return fileObject;
+          } else {
+            console.error(`No redirect URL found for ${url}`);
+          }
+        } catch (error) {
+          console.error(`Error fetching file: ${error}`);
+        }
+      })
+    );
+  
+    return fetchedFiles.filter((file) => file); // Filter out undefined values
+  };
+  useEffect(() => {
+    if (window !== undefined) {
+      setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
+    }
+  }, []);
 
   const Selectoption1 = [
     { value: "custom_template", label: "Custom Template" },
@@ -62,26 +111,29 @@ const CreateUpdateProject = (props) => {
   ];
 
   const handleFileChange = (response) => {
-    axios.patch(`${network.onlineUrl}api/file/${response[0].id}`, {
-      data:{
-        type: "file",
-      attributes: {
-        project_id: selectedProject.id,
-      }
-    },
-    }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    .then((response) => { 
-      console.log(response);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-  
-
+    axios
+      .patch(
+        `${network.onlineUrl}api/file/${response[0].id}`,
+        {
+          data: {
+            type: "file",
+            attributes: {
+              project_id: selectedProject.id,
+            },
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
 
     setFormData({
       ...formData,
@@ -97,37 +149,43 @@ const CreateUpdateProject = (props) => {
 
   useEffect(() => {
     getDataFromLocalStorage();
-    if(window !== undefined){
+    if (window !== undefined) {
       setToken(localStorage.getItem("token"));
     }
-    if(props.formType === "update" && token){
-      axios.get(`${network.onlineUrl}api/project/${props.projectId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        const project = response.data.body.data;
-        setFormData({ 
-          selectedProject: project.id,
-          assigned_to: project.attributes.assigned_to,
-          description: project.attributes.description,
-          address1: project.attributes.address1,
-          address2: project.attributes.address2,
-          zipcode: project.attributes.zipcode,
-          state: project.attributes.state,
-          budget: project.attributes.budget_estimated,
-          start_date:project.attributes.start_date? new Date(project.attributes.start_date): "",
-          end_date: project.attributes.end_date? new Date(project.attributes.end_date) : "",
-          customer_invite: project.attributes.customer_invite,
-          exception_notes : project.attributes.exception_notes,
-          selectTemplate: project.attributes.project_type,
-          files: project.attributes.document_urls,
+    if (props.formType === "update" && token) {
+      axios
+        .get(`${network.onlineUrl}api/project/${props.projectId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          const project = response.data.body.data;
+          setFiles(getSetFiles(project.attributes.document_urls));
+          setFormData({
+            selectedProject: project.id,
+            description: project.attributes.description,
+            address1: project.attributes.address1,
+            address2: project.attributes.address2,
+            zipcode: project.attributes.zipcode,
+            state: project.attributes.state,
+            budget: project.attributes.budget_estimated,
+            start_date: project.attributes.start_date
+              ? new Date(project.attributes.start_date)
+              : "",
+            end_date: project.attributes.end_date
+              ? new Date(project.attributes.end_date)
+              : "",
+            exception_notes: project.attributes.exception_notes,
+            selectTemplate: project.attributes.project_type,
+            files: project.attributes.document_urls,
+            name: project.attributes.name,
+            businessId: project.attributes.gc_business_id,
+          });
+        })
+        .catch((error) => {
+          console.log(error);
         });
-      })
-      .catch((error) => {
-        console.log(error);
-      });
     }
   }, [token]);
 
@@ -153,11 +211,10 @@ const CreateUpdateProject = (props) => {
     event.preventDefault();
     const userid = localStorage.getItem("userid");
 
-    if(props.formType === "update"){
-
+    if (props.formType === "update") {
       axios
         .patch(
-          `${network.onlineUrl}api/project`,
+          `${network.onlineUrl}api/project/${selectedProject.id}`,
           {
             data: {
               type: "string",
@@ -170,9 +227,9 @@ const CreateUpdateProject = (props) => {
                 state: formData.state,
                 budget_estimated: Number(formData.budget),
                 home_owner_id: Number(userid),
-                gc_business_id: 101000,
+                gc_business_id: formData.businessId,
                 project_type: selectTemplate,
-                exception_notes : formData.exception_notes,
+                exception_notes: formData.exception_notes,
                 start_date: formData.start_date,
                 end_date: formData.end_date,
                 document_urls: formData.files,
@@ -187,29 +244,26 @@ const CreateUpdateProject = (props) => {
         )
         .then((response) => {
           console.log(response);
-           setFormData({
-        name: "",
-        assigned_to: [], // Assigned To
-        description: "",
-        address1: "",
-        address2: "",
-        zipcode: "", // zipcode
-        state: "", // State
-        budget: "", // Price for customer/Budget
-        exception_notes : "",
-        start_date: "", // Start date
-        end_date: "", // End date
-        customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
-        files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
-      });
+          setFormData({
+            name: "",
+            description: "",
+            address1: "",
+            address2: "",
+            zipcode: "", // zipcode
+            state: "", // State
+            budget: "", // Price for customer/Budget
+            exception_notes: "",
+            start_date: "", // Start date
+            end_date: "", // End date
+            files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
+          });
         })
         .catch((error) => {
           console.log(error);
         });
-      }
+    }
 
-    if(props.formType === "create") { 
-      
+    if (props.formType === "create") {
       axios
         .post(
           `${network.onlineUrl}api/project`,
@@ -225,9 +279,9 @@ const CreateUpdateProject = (props) => {
                 state: formData.state,
                 budget_estimated: Number(formData.budget),
                 home_owner_id: Number(userid),
-                gc_business_id: 101000,
+                gc_business_id: formData.businessId,
                 project_type: selectTemplate,
-                exception_notes : formData.exception_notes,
+                exception_notes: formData.exception_notes,
                 start_date: formData.start_date,
                 end_date: formData.end_date,
                 document_urls: formData.files,
@@ -242,30 +296,25 @@ const CreateUpdateProject = (props) => {
         )
         .then((response) => {
           console.log(response);
-           setFormData({
-        name: "",
-        assigned_to: [], // Assigned To
-        description: "",
-        address1: "",
-        address2: "",
-        zipcode: "", // zipcode
-        state: "", // State
-        budget: "", // Price for customer/Budget
-        exception_notes : "",
-        start_date: "", // Start date
-        end_date: "", // End date
-        customer_invite: "", // Invite customer (including setting permissions - using phone number or email or user id)
-        files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
-      });
+          setFormData({
+            name: "",
+            description: "",
+            address1: "",
+            address2: "",
+            zipcode: "", // zipcode
+            state: "", // State
+            budget: "", // Price for customer/Budget
+            exception_notes: "",
+            start_date: "", // Start date
+            end_date: "", // End date
+            files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
+          });
         })
         .catch((error) => {
           console.log(error);
         });
-
-     
     }
   };
-
 
   return (
     <div>
@@ -327,7 +376,7 @@ const CreateUpdateProject = (props) => {
                     </div>
                     <div className="xl:col-span-4 col-span-12">
                       <label className="form-label">Exception Notes</label>
-                      <input 
+                      <input
                         required
                         type="text"
                         className="form-control"
@@ -337,7 +386,39 @@ const CreateUpdateProject = (props) => {
                         onChange={handleInputChange}
                       />
                     </div>
-              
+                    <div className="xl:col-span-6 col-span-12">
+                      <label htmlFor="businessId" className="form-label">
+                        Business ID
+                      </label>
+                      <Select
+                        id="businessId"
+                        value={
+                          gcBusiness?.find(
+                            (business) => business.id === formData.businessId
+                          )
+                            ? {
+                                value: formData.businessId,
+                                label: gcBusiness.find(
+                                  (business) =>
+                                    business.id === formData.businessId
+                                ).attributes.name,
+                              }
+                            : null
+                        }
+                        onChange={(selectedOption) =>
+                          handleInputChange({
+                            target: {
+                              id: "businessId",
+                              value: selectedOption.value,
+                            },
+                          })
+                        }
+                        options={gcBusiness.map((business) => ({
+                          value: business.id,
+                          label: business.attributes.name,
+                        }))}
+                      />
+                    </div>
 
                     {/* input field for Budget */}
                     <div className="xl:col-span-6 col-span-12">
@@ -354,7 +435,7 @@ const CreateUpdateProject = (props) => {
                         onChange={handleInputChange}
                       />
                     </div>
-                    
+
                     {/* input field for Project address line one*/}
                     <div className="xl:col-span-6 col-span-12">
                       <label htmlFor="project_address" className="form-label">
@@ -415,31 +496,8 @@ const CreateUpdateProject = (props) => {
                         onChange={handleInputChange}
                       />
                     </div>
-                    
 
-                    <div className="xl:col-span-6 col-span-12">
-                      <label className="form-label">Assigned To</label>
-                      <Select
-                        required
-                        isMulti
-                        name="state"
-                        options={multiselectdata.map((user) => ({
-                          value: user.id,
-                          label: user.attributes.username,
-                        }))}
-                        className="js-example-placeholder-multiple w-full js-states"
-                        menuPlacement="auto"
-                        classNamePrefix="Select2"
-                        onChange={(selectedOptions) => {
-                          setFormData({
-                            ...formData,
-                            assigned_to: selectedOptions.map(
-                              (option) => option.value
-                            ),
-                          });
-                        }}
-                      />
-                    </div>
+                  
                     <div className="xl:col-span-12 col-span-12 mb-4">
                       <label htmlFor="description" className="form-label">
                         Project Description :
@@ -494,20 +552,7 @@ const CreateUpdateProject = (props) => {
                         </div>
                       </div>
                     </div>
-                    <div className="xl:col-span-12 col-span-12">
-                      <label htmlFor="inviteCustomer" className="form-label">
-                        Invite Customer :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="customer_invite"
-                        placeholder="Enter Phone Number, Email, or User ID"
-                        value={formData.customer_invite}
-                        onChange={handleInputChange}
-                      />
-                    </div>
+                    
                     {/* Add other input fields here */}
                     <div className="xl:col-span-12 col-span-12">
                       <label htmlFor="text-area" className="form-label">
@@ -525,8 +570,6 @@ const CreateUpdateProject = (props) => {
                               Authorization: `Bearer ${token}`,
                             },
                           },
-                          
-                          
                         }}
                         onprocessfile={(error, file) => {
                           if (error) {

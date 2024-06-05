@@ -18,7 +18,6 @@ const ProjectSummary = () => {
   useEffect(() => {
     setClientRender(true);
     getProjectDataFromLocalStorage();
-    getUserDataFromLocalStorage();
   }, []);
 
   useEffect(() => {
@@ -50,16 +49,6 @@ const ProjectSummary = () => {
       setSelectedProject(null);
     }
   };
-  const getUserDataFromLocalStorage = () => {
-    if (
-      localStorage.getItem("selectedUser") !== null &&
-      localStorage.getItem("selectedUser") !== "undefined"
-    ) {
-      const selectedUser = JSON.parse(localStorage.getItem("selectedUser"));
-      setSelectedUser(selectedUser);
-    }
-  };
-
   return (
     <Fragment>
       <Seo title={`${selectedProject?.project_name || `Project Summary`}`} />
@@ -68,7 +57,6 @@ const ProjectSummary = () => {
         mainpage="Project Summary"
         mainpageurl="/components/project-management/project-summary/"
         loadProjectData={getProjectDataFromLocalStorage}
-        loadUserData={getUserDataFromLocalStorage}
         createProject={true}
       />
       {selectedProject && (
