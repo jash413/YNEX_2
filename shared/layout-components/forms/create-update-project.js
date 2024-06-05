@@ -74,7 +74,7 @@ const CreateUpdateProject = (props) => {
         Authorization: `Bearer ${token}`,
       },
     })
-    .then((response) => {
+    .then((response) => { 
       console.log(response);
     })
     .catch((error) => {
@@ -89,7 +89,6 @@ const CreateUpdateProject = (props) => {
     });
   };
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
     fetch("/api/users/")
       .then((response) => response.json())
       .then((data) => setMultiselectdata(data.data))
@@ -98,15 +97,18 @@ const CreateUpdateProject = (props) => {
 
   useEffect(() => {
     getDataFromLocalStorage();
-    if(props.formType === "update"){
-      axios.get(`${network.onlineUrl}api/project/${selectedProject.id}`, {
+    if(window !== undefined){
+      setToken(localStorage.getItem("token"));
+    }
+    if(props.formType === "update" && token){
+      axios.get(`${network.onlineUrl}api/project/${props.projectId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       .then((response) => {
-        const project = response.data.data;
-        setFormData({
+        const project = response.data.body.data;
+        setFormData({ 
           selectedProject: project.id,
           assigned_to: project.attributes.assigned_to,
           description: project.attributes.description,
@@ -115,8 +117,8 @@ const CreateUpdateProject = (props) => {
           zipcode: project.attributes.zipcode,
           state: project.attributes.state,
           budget: project.attributes.budget_estimated,
-          start_date: project.attributes.start_date,
-          end_date: project.attributes.end_date,
+          start_date:project.attributes.start_date? new Date(project.attributes.start_date): "",
+          end_date: project.attributes.end_date? new Date(project.attributes.end_date) : "",
           customer_invite: project.attributes.customer_invite,
           exception_notes : project.attributes.exception_notes,
           selectTemplate: project.attributes.project_type,
@@ -127,7 +129,7 @@ const CreateUpdateProject = (props) => {
         console.log(error);
       });
     }
-  }, []);
+  }, [token]);
 
   const handleInputChange = (event) => {
     setFormData({ ...formData, [event.target.id]: event.target.value });

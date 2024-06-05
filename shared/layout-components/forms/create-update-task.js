@@ -61,6 +61,7 @@ const CreateUpdateTask = (props) => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedTaskCostCodes, setSelectedTaskCostCodes] = useState([]);
   const [progress, setProgress] = useState(0);
+  const [gcBusiness, setGcBuisness] = useState([]);
   const handleProgressChange = (event) => {
     setProgress(event.target.value);
   };
@@ -110,6 +111,12 @@ const CreateUpdateTask = (props) => {
     getDataFromLocalStorage();
   }, []);
 
+  useEffect(() => {
+    if (window !== undefined) {
+      setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
+    }
+  }, []);
+
   const formDataSchema = z.object({
     status: z.string().nonempty({ message: "Status is required" }),
     priority: z.string().nonempty({ message: "Priority is required" }),
@@ -138,7 +145,7 @@ const CreateUpdateTask = (props) => {
 
   const handleInputChange = (event) => {
     const { id, value } = event.target;
-    const updatedValue = id === 'notes' ? value.split('\n') : value;
+    const updatedValue = id === "notes" ? value.split("\n") : value;
     setFormData({ ...formData, [id]: updatedValue });
   };
 
@@ -202,7 +209,7 @@ const CreateUpdateTask = (props) => {
 
                 attributes: {
                   project_id: selectedProject.id,
-                  task_code_id:   Number(formData.taskCode),
+                  task_code_id: Number(formData.taskCode),
                   task_name: formData.taskName,
                   description: formData.description,
                   start_date: formData.startDate
@@ -362,24 +369,49 @@ const CreateUpdateTask = (props) => {
                 <label htmlFor="businessId" className="form-label">
                   Business ID
                 </label>
-                <input
-                  type="text"
-                  className="form-control"
+                <Select
                   id="businessId"
-                  onChange={handleInputChange}
-                  value={formData.businessId}
+                  value={
+                    gcBusiness?.find(
+                      (business) => business.id === formData.businessId
+                    )
+                      ? {
+                          value: formData.businessId,
+                          label: gcBusiness.find(
+                            (business) => business.id === formData.businessId
+                          ).attributes.name,
+                        }
+                      : null
+                  }
+                  onChange={(selectedOption) =>
+                    handleInputChange({
+                      target: { id: "businessId", value: selectedOption.value },
+                    })
+                  }
+                  options={gcBusiness.map((business) => ({
+                    value: business.id,
+                    label: business.attributes.name,
+                  }))}
                 />
               </div>
               <div className="mb-4">
                 <label htmlFor="status" className="form-label">
                   Status
                 </label>
-                <input
-                  type="text"
-                  className="form-control"
+                <Select
                   id="status"
-                  onChange={handleInputChange}
-                  value={formData.status}
+                  value={{ value: formData.status, label: formData.status }}
+                  onChange={(selectedOption) =>
+                    handleInputChange({
+                      target: { id: "status", value: selectedOption.value },
+                    })
+                  }
+                  options={[
+                    { value: "Yet to Start", label: "Yet to Start" },
+                    { value: "In progress", label: "In progress" },
+                    { value: "Complete", label: "Complete" },
+                    { value: "Delayed", label: "Delayed" },
+                  ]}
                 />
               </div>
               <div className="mb-4">
@@ -417,8 +449,8 @@ const CreateUpdateTask = (props) => {
                   rows="3"
                   cols="50"
                   onChange={handleInputChange}
-                  value={formData.notes?.join('\n')}
-                  />
+                  value={formData.notes?.join("\n")}
+                />
               </div>
               <div className="mb-4">
                 <label htmlFor="estimatedBudget" className="form-label">

@@ -3,7 +3,7 @@ import CreateUpdateChangeOrder from "@/shared/layout-components/forms/create-upd
 const CreateChangeOrder = () => {
   return (
     <>
-      {/* <CreateUpdateChangeOrder formType="create" /> */}
+      <CreateUpdateChangeOrder formType="create" />
     </>
   );
 };

@@ -37,14 +37,6 @@ const ProjectSummary = () => {
       .catch((error) => console.error("Error fetching data:", error));
   }, []);
 
-  const ITEMS_PER_PAGE = 5;
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(projectData.length / ITEMS_PER_PAGE);
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  const end = start + ITEMS_PER_PAGE;
-  const currentItems = projectData.slice(start, end);
-
   const getProjectDataFromLocalStorage = () => {
     if (
       localStorage.getItem("selectedProject") !== null &&
@@ -80,6 +72,23 @@ const ProjectSummary = () => {
         createProject={true}
       />
       {selectedProject && (
+        <>
+        <div className="flex">
+          <button
+            type="button"
+            className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !text-[0.75rem]"
+            data-hs-overlay="#create-Task"
+          >
+            <Link
+              href={`/components/project-management/edit-project/${selectedProject?.id}`}
+            >
+              <i className="ri-add-line font-semibold align-middle"></i> Edit
+              Project
+            </Link>
+          </button>
+        </div>
+      
+
         <div className="grid grid-cols-12 gap-x-6">
           <div className="xl:col-span-4 lg:col-span-4 md:col-span-6 sm:col-span-6 col-span-12">
             <div className="box">
@@ -211,7 +220,9 @@ const ProjectSummary = () => {
             </div>
           </div>
         </div>
+        </>
       )}
+
       {selectedProject && (
         <div className="grid grid-cols-12 gap-6">
           <div className="xl:col-span-6 md:col-span-6  col-span-12">

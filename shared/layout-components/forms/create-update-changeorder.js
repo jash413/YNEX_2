@@ -17,31 +17,11 @@ import { FilePond } from "react-filepond";
 import network from "@/config";
 import { set } from "date-fns";
 
-const formDataSchema = z.object({
-  selectedProject: z.string(),
-  client_name: z.string(),
-  assigned_to: z.array(z.string()),
-  description: z.string(),
-  address1: z.string(),
-  address2: z.string(),
-  zipcode: z.number(),
-  state: z.string(),
-  budget: z.number(),
-  start_date: z.date(),
-  end_date: z.date(),
-  customer_invite: z.string(),
-  files: z.array(z.string()),
-});
-
 const CreateUpdateChangeOrder = (props) => {
   const formType = props.formType;
   const [formData, setFormData] = useState({
-    updatedAt: "",
-    project_id: "",
-    creator_id: "",
     notes: [],
     document_urls: [],
-    createdAt: "",
     active: false,
     description: "",
     amount: "",
@@ -53,16 +33,136 @@ const CreateUpdateChangeOrder = (props) => {
   });
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectTemplate, setSelectTemplate] = useState("");
-  const [multiselectdata, setMultiselectdata] = useState([]);
+  const [Users, setUsers] = useState(null);
+  const [user, setUser] = useState(null);
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
 
-
+  const updateLocalStorage = () => {
+    axios
+      .get(`${network.onlineUrl}api/change_Order`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        localStorage.setItem("projectChangeOrders", JSON.stringify(response.data.body.data));
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
   const handleFileChange = (response) => {
+    axios
+      .patch(
+        `${network.onlineUrl}api/file/${response[0].id}`,
+        {
+          data: {
+            type: "file",
+            attributes: {
+              project_id: selectedProject.id,
+            },
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((response) => {
+        console.log(response);
+        
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
     setFormData({
       ...formData,
-      files: [...formData.files, response[0].file_url],
+      document_urls: [...formData.document_urls, response[0].file_url],
     });
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (formType === "update") {
+      axios
+        .patch(
+          `${network.onlineUrl}api/change_Order/${props.changeOrderId}`,
+          {
+            data: {
+              type: "change_order",
+              attributes: {
+                project_id: selectedProject.id,
+                creator_id: user,
+                notes: formData.notes,
+                document_urls: formData.document_urls,
+                active: formData.active,
+                description: formData.description,
+                amount: Number(formData.amount),
+                status: formData.status,
+                increaase_budget: formData.increase_budget,
+                payment_terms: formData.payment_terms,
+                reviewed_by: formData.reviewed_by,
+                approved_by: formData.approved_by,
+              },
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        .then((response) => {
+          console.log(response);
+          if(response.data.status === 200){
+            updateLocalStorage();
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } else {
+      axios
+        .post(
+          `${network.onlineUrl}api/change_Order`,
+          {
+            data: {
+              type: "change_order",
+              attributes: {
+                project_id: selectedProject.id,
+                creator_id: user,
+                notes: formData.notes,
+                document_urls: formData.document_urls,
+                active: formData.active,
+                description: formData.description,
+                amount: Number(formData.amount),
+                status: formData.status,
+                increaase_budget: formData.increase_budget,
+                payment_terms: formData.payment_terms,
+                reviewed_by: formData.reviewed_by,
+                approved_by: formData.approved_by,
+              },
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        .then((response) => {
+          console.log(response);
+          if(response.data.status === 201){
+            updateLocalStorage();
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
   };
   useEffect(() => {
     setToken(localStorage.getItem("token"));
@@ -70,14 +170,44 @@ const CreateUpdateChangeOrder = (props) => {
       .then((response) => response.json())
       .then((data) => setMultiselectdata(data.data))
       .catch((error) => console.error("Error:", error));
-  }, []);
+    if (window !== undefined) {
+      setUsers(JSON.parse(localStorage.getItem("Users")));
+      setToken(localStorage.getItem("token"));
+      setUser(JSON.parse(localStorage.getItem("userid")));
+    }
+    if(formType === "update" && token !== ""){
+      axios
+      .get(`${network.onlineUrl}api/change_Order/${props.changeOrderId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        setFormData(response.data.body.data.attributes);
+      }
+      )
+      .catch((error) => {
+        console.log(error);
+      }
+      );
+    }
+  }, [token]);
 
   useEffect(() => {
     getDataFromLocalStorage();
   }, []);
 
   const handleInputChange = (event) => {
-    setFormData({ ...formData, [event.target.id]: event.target.value });
+    const { id, value, checked } = event.target;
+    let finalValue;
+    if (id === "active" || id === "increase_budget") {
+      finalValue = checked;
+    } else if (id === "notes") {
+      finalValue = value.split("\n");
+    } else {
+      finalValue = value;
+    }
+    setFormData({ ...formData, [id]: finalValue });
   };
 
   const getDataFromLocalStorage = () => {
@@ -94,15 +224,15 @@ const CreateUpdateChangeOrder = (props) => {
     }
   };
 
-
-
   return (
     <div>
       <Seo
-        title={`${formType === "update" ? "Update Project" : "Create Project"}`}
+        title={`${
+          formType === "update" ? "Update Change Order" : "Create Change Order"
+        }`}
       />
       <Pageheader
-        mainpage={`${formType === "update" ? "Update" : "Create"} Project`}
+        mainpage={`${formType === "update" ? "Update" : "Create"} Change Order`}
         activepage={`${selectedProject?.attributes?.name || `Project Summary`}`}
         mainpageurl="/components/project-management/project-summary/"
         loadProjectData={getDataFromLocalStorage}
@@ -118,229 +248,30 @@ const CreateUpdateChangeOrder = (props) => {
                 <div className="box-header">
                   <div className="box-title">
                     {formType === "update"
-                      ? "Update Project"
-                      : "Create Project"}
+                      ? "Update Change Order"
+                      : "Create Change Order"}
                   </div>
                 </div>
                 <div className="box-body">
                   <div className="grid grid-cols-12 gap-4">
+                    {/* input field for Notes */}
                     <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="template" className="form-label">
-                        Select Template :
-                      </label>
-                      <Select
-                        required
-                        name="template"
-                        options={Selectoption1}
-                        className="js-example-basic-single w-full"
-                        isSearchable
-                        menuPlacement="auto"
-                        classNamePrefix="Select2"
-                        defaultValue={[Selectoption1[0]]}
-                        onChange={(option) => setSelectTemplate(option.value)}
-                      />
-                    </div>
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="selectedProject" className="form-label">
-                        Project Name :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="name"
-                        placeholder="Enter Project Name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for Client Name */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="client_name" className="form-label">
-                        Client Name :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="client_name"
-                        placeholder="Enter Client Name"
-                        value={formData.client_name}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    {/* input field for Budget */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="budget" className="form-label">
-                        Budget :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="budget"
-                        placeholder="Enter Budget"
-                        value={formData.budget}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for Project Address */}
-                    {/* input field for Project address line one*/}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="project_address" className="form-label">
-                        Project Address Line 1:
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="address1"
-                        placeholder="Enter Project Address"
-                        value={formData.address1}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for Project address line two*/}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="project_address" className="form-label">
-                        Project Address Line 2 :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="address2"
-                        placeholder="Enter Project Address"
-                        value={formData.address2}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for zipcode */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="zipcode" className="form-label">
-                        zipcode :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="zipcode"
-                        placeholder="Enter zipcode"
-                        value={formData.zipcode}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for state */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="state" className="form-label">
-                        State :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="state"
-                        placeholder="Enter State"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="xl:col-span-6 col-span-12">
-                      <label className="form-label">Assigned To</label>
-                      <Select
-                        required
-                        isMulti
-                        name="state"
-                        options={multiselectdata.map((user) => ({
-                          value: user.id,
-                          label: user.attributes.username,
-                        }))}
-                        className="js-example-placeholder-multiple w-full js-states"
-                        menuPlacement="auto"
-                        classNamePrefix="Select2"
-                        onChange={(selectedOptions) => {
-                          setFormData({
-                            ...formData,
-                            assigned_to: selectedOptions.map(
-                              (option) => option.value
-                            ),
-                          });
-                        }}
-                      />
-                    </div>
-                    <div className="xl:col-span-12 col-span-12 mb-4">
-                      <label htmlFor="description" className="form-label">
-                        Project Description :
+                      <label htmlFor="notes" className="form-label">
+                        Notes :
                       </label>
                       <textarea
                         required
                         className="form-control"
-                        id="description"
-                        rows="3"
-                        cols="50"
-                        value={formData.description}
+                        id="notes"
+                        placeholder="Enter Notes"
+                        value={formData.notes?.join("\n")}
                         onChange={handleInputChange}
                       />
                     </div>
-
-                    <div className="xl:col-span-6 col-span-12">
-                      <label className="form-label">Start Date :</label>
-                      <div className="form-group">
-                        <div className="input-group">
-                          <div className="input-group-text text-muted">
-                            <i className="ri-calendar-line"></i>
-                          </div>
-                          <DatePicker
-                            required
-                            placeholder="Choose the date"
-                            className="ti-form-input ltr:rounded-l-none rtl:rounded-r-none focus:z-10"
-                            selected={formData.start_date}
-                            onChange={(date) =>
-                              setFormData({ ...formData, start_date: date })
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {/* input field for End date */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label className="form-label">End Date :</label>
-                      <div className="form-group">
-                        <div className="input-group">
-                          <div className="input-group-text text-muted">
-                            <i className="ri-calendar-line"></i>
-                          </div>
-                          <DatePicker
-                            required
-                            placeholder="Choose the date"
-                            className="ti-form-input ltr:rounded-l-none rtl:rounded-r-none focus:z-10"
-                            selected={formData.end_date}
-                            onChange={(date) =>
-                              setFormData({ ...formData, end_date: date })
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="xl:col-span-12 col-span-12">
-                      <label htmlFor="inviteCustomer" className="form-label">
-                        Invite Customer :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="customer_invite"
-                        placeholder="Enter Phone Number, Email, or User ID"
-                        value={formData.customer_invite}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* Add other input fields here */}
-                    <div className="xl:col-span-12 col-span-12">
-                      <label htmlFor="text-area" className="form-label">
-                        Attachments
+                    {/* input field for Document URLs */}
+                    <div className="xl:col-span-4 col-span-12">
+                      <label htmlFor="document_urls" className="form-label">
+                        Document URLs :
                       </label>
                       <FilePond
                         files={files}
@@ -354,8 +285,6 @@ const CreateUpdateChangeOrder = (props) => {
                               Authorization: `Bearer ${token}`,
                             },
                           },
-                          
-                          
                         }}
                         onprocessfile={(error, file) => {
                           if (error) {
@@ -365,7 +294,160 @@ const CreateUpdateChangeOrder = (props) => {
                           }
                         }}
                         name="files"
-                        labelIdle="Drag & Drop your file here or click "
+                        labelIdle="Drag & Drop your files here or click"
+                      />
+                    </div>
+
+                    {/* input field for Description */}
+                    <div className="xl:col-span-4 col-span-12">
+                      <label htmlFor="description" className="form-label">
+                        Description :
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="form-control"
+                        id="description"
+                        placeholder="Enter Description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    {/* input field for Amount */}
+                    <div className="xl:col-span-4 col-span-12">
+                      <label htmlFor="amount" className="form-label">
+                        Amount :
+                      </label>
+                      <input
+                        required
+                        type="number"
+                        className="form-control"
+                        id="amount"
+                        placeholder="Enter Amount"
+                        value={formData.amount}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    {/* input field for Status */}
+                    <div className="xl:col-span-4 col-span-12">
+                      <label htmlFor="status" className="form-label">
+                        Status :
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="form-control"
+                        id="status"
+                        placeholder="Enter Status"
+                        value={formData.status}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    {/* input field for Increase Budget */}
+                    <div className="xl:col-span-2 col-span-12">
+                      <label htmlFor="increase_budget" className="form-label">
+                        Increase Budget :
+                      </label>
+                      <br />
+                      <input
+                        type="checkbox"
+                        id="increase_budget"
+                        className="ti-switch mb-4"
+                        checked={formData.increase_budget}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="xl:col-span-2 col-span-12">
+                      <label htmlFor="active" className="form-label">
+                        Active :
+                      </label>
+                      <br />
+                      <input
+                        type="checkbox"
+                        className="ti-switch mb-4"
+                        id="active"
+                        checked={formData.active}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    {/* input field for Payment Terms */}
+                    <div className="xl:col-span-4 col-span-12">
+                      <label htmlFor="payment_terms" className="form-label">
+                        Payment Terms :
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="form-control"
+                        id="payment_terms"
+                        placeholder="Enter Payment Terms"
+                        value={formData.payment_terms}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    {/* input field for Reviewed By */}
+
+                    <div className="xl:col-span-4 col-span-12">
+                      <label htmlFor="reviewed_by" className="form-label">
+                        Reviewed By :
+                      </label>
+                      <Select
+                        id="reviewed_by"
+                        value={
+                          Users?.find(
+                            (user) => user.id === formData.reviewed_by
+                          )
+                            ? {
+                                value: formData.reviewed_by,
+                                label: Users.find(
+                                  (user) => user.id === formData.reviewed_by
+                                ).attributes.username,
+                              }
+                            : null
+                        }
+                        onChange={(selectedOption) =>
+                          setFormData({
+                            ...formData,
+                            reviewed_by: selectedOption.value,
+                          })
+                        }
+                        options={Users?.map((user) => ({
+                          value: user.id,
+                          label: user.attributes.username,
+                        }))}
+                        menuPlacement="auto"
+                      />
+                    </div>
+                    {/* input field for Approved By */}
+                    <div className="xl:col-span-4 col-span-12">
+                      <label htmlFor="approved_by" className="form-label">
+                        Approved By :
+                      </label>
+                      <Select
+                        id="approved_by"
+                        value={
+                          Users?.find(
+                            (user) => user.id === formData.approved_by
+                          )
+                            ? {
+                                value: formData.approved_by,
+                                label: Users.find(
+                                  (user) => user.id === formData.approved_by
+                                ).attributes.username,
+                              }
+                            : null
+                        }
+                        onChange={(selectedOption) =>
+                          setFormData({
+                            ...formData,
+                            approved_by: selectedOption.value,
+                          })
+                        }
+                        options={Users?.map((user) => ({
+                          value: user.id,
+                          label: user.attributes.username,
+                        }))}
+                        menuPlacement="auto"
                       />
                     </div>
                   </div>
@@ -376,8 +458,8 @@ const CreateUpdateChangeOrder = (props) => {
                     className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
                   >
                     {formType === "update"
-                      ? "Update Project"
-                      : "Create Project"}
+                      ? "Update Change Order"
+                      : "Create Change Order"}
                   </button>
                 </div>
               </div>
