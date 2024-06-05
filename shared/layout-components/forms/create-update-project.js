@@ -73,21 +73,9 @@ const CreateUpdateProject = (props) => {
   
           // If the response is a redirect, get the redirected URL
           const redirectedUrl = response.headers.location;
-          console.log(redirectedUrl);
   
           if (redirectedUrl) {
-            // Fetch the file from the redirected URL
-            const fileResponse = await axios.get(redirectedUrl, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              responseType: 'arraybuffer',
-            });
-  
-            const file = new Blob([fileResponse.data], { type: 'application/octet-stream' });
-            const fileName = redirectedUrl.split('/').pop();
-            const fileObject = new File([file], fileName, { type: file.type });
-            return fileObject;
+            return redirectedUrl;
           } else {
             console.error(`No redirect URL found for ${url}`);
           }
