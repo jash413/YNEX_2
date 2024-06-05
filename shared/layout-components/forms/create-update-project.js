@@ -60,7 +60,7 @@ const CreateUpdateProject = (props) => {
   const [token, setToken] = useState("");
   const getSetFiles = async (urls) => {
     const fetchedFiles = await Promise.all(
-      urls.map(async (url) => {
+      urls?.map(async (url) => {
         try {
           // Get the redirected URL
           const response = await axios.get(`${network.onlineUrl}api/download_file/?filename=${url}`, {
