@@ -11,6 +11,7 @@ const Pageheader = ({
   mainpage,
   activepage,
   createProject,
+  loadingState
 }) => {
   const [projectData, setProjectData] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -56,6 +57,7 @@ const Pageheader = ({
   }, []);
 
   const handleProjectSelect = async (selectedOption) => {
+    loadingState();
     try {
       const newSelectedProject = selectedOption
         ? projectData.find((project) => project.id === selectedOption.value)

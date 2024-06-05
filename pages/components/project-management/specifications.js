@@ -1,5 +1,6 @@
 import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Seo from "@/shared/layout-components/seo/seo";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 import { useEffect, useState, useCallback } from "react";
 import { jsPDF } from "jspdf";
 
@@ -10,21 +11,7 @@ const Specifications = () => {
   const [formData, setFormData] = useState({});
   const [formStatus, setFormStatus] = useState({});
   const [tempFormData, setTempFormData] = useState({});
-
-  const getProjectDataFromLocalStorage = useCallback(() => {
-    const selectedProject = localStorage.getItem("selectedProject");
-    if (selectedProject && selectedProject !== "undefined") {
-      setSelectedProject(JSON.parse(selectedProject));
-      const selectedSpecifications = JSON.parse(
-        localStorage.getItem("projectSpecifications")
-      );
-      setSelectedSpecification(selectedSpecifications);
-      return selectedSpecifications;
-    } else {
-      setSelectedSpecification(null);
-      return null;
-    }
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   const isFieldComplete = useCallback((field, data) => {
     const fieldData = data[field.attributeName];
@@ -67,18 +54,51 @@ const Specifications = () => {
     },
     [isFormComplete, isFieldComplete]
   );
-
-  useEffect(() => {
-    const specifications = getProjectDataFromLocalStorage();
-    const savedFormData = localStorage.getItem("formData");
-    if (savedFormData) {
-      const parsedFormData = JSON.parse(savedFormData);
-      setFormData(parsedFormData);
-      updateAllFormsStatus(parsedFormData, specifications);
-    } else {
-      updateAllFormsStatus({}, specifications);
+  const getProjectDataFromLocalStorage = useCallback(async () => {
+    try {
+      const selectedProject = localStorage.getItem("selectedProject");
+      if (selectedProject && selectedProject !== "undefined") {
+        const parsedProject = JSON.parse(selectedProject);
+        const selectedSpecifications = JSON.parse(
+          localStorage.getItem("projectSpecifications")
+        );
+  
+        const savedFormData = localStorage.getItem("formData");
+        const parsedFormData = savedFormData ? JSON.parse(savedFormData) : {};
+  
+        return { parsedProject, selectedSpecifications, parsedFormData };
+      } else {
+        return { parsedProject: null, selectedSpecifications: null, parsedFormData: {} };
+      }
+    } catch (error) {
+      console.error("Error parsing localStorage data:", error);
+      return { parsedProject: null, selectedSpecifications: null, parsedFormData: {} };
     }
-  }, [getProjectDataFromLocalStorage, updateAllFormsStatus]);
+  }, []);
+  
+  const updateStates = useCallback((data) => {
+    const { parsedProject, selectedSpecifications, parsedFormData } = data;
+    setSelectedProject(parsedProject);
+    setSelectedSpecification(selectedSpecifications);
+    setFormData(parsedFormData);
+    updateAllFormsStatus(parsedFormData, selectedSpecifications);
+  }, [updateAllFormsStatus]);
+  
+  const loadProjectData = useCallback(async () => {
+    try {
+      const data = await getProjectDataFromLocalStorage();
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+      updateStates(data);
+    } catch (error) {
+      console.error("Error loading project data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [getProjectDataFromLocalStorage, updateStates]);
+  
+  useEffect(() => {
+    loadProjectData();
+  }, [loadProjectData]);
 
   const handleSpecificationClick = (specification) => {
     setCurrentForm(specification); // Update the current form being edited
@@ -407,96 +427,107 @@ const Specifications = () => {
     );
   };
 
+  const startLoading = () => {
+    setLoading(true);
+  };
+
   return (
     <div>
       <Seo title={"Specifications"} />
       <Pageheader
         activepage={`${selectedProject?.attributes?.name || `Specifications`}`}
         mainpage="Specifications"
-        loadProjectData={getProjectDataFromLocalStorage}
+        loadProjectData={loadProjectData}
         mainpageurl="/components/project-management/project-summary/"
+        loadingState={startLoading}
       />
-      <div className="mt-4">
-        <button
-          type="button"
-          className="ti-btn bg-primary text-white !font-medium"
-          onClick={generatePDF}
-        >
-          Print All Forms as PDF
-        </button>
-      </div>
-      <br />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {selectedSpecification?.map((specification, index) => (
-          <button
-            key={index}
-            onClick={() => handleSpecificationClick(specification)}
-            data-hs-overlay="#add-task"
-          >
-            <div
-              className={`mb-4 box border-2 ${
-                formStatus[specification.title] === "complete"
-                  ? "border-green"
-                  : formStatus[specification.title] === "partial"
-                  ? "border-yellow"
-                  : "border-gray"
-              }`}
+      {loading ? (
+        <Preloader />
+      ) : (
+        <>
+          <div className="mt-4">
+            <button
+              type="button"
+              className="ti-btn bg-primary text-white !font-medium"
+              onClick={generatePDF}
             >
-              <div className="box-body">
-                <div className="card-text">
-                  <h4 className="text-lg font-semibold mb-2">
-                    {specification.title}
-                  </h4>
-                  <p className="text-sm">
-                    Status:{" "}
-                    {formStatus[specification.title] === "complete"
-                      ? "✅ Complete"
+              Print All Forms as PDF
+            </button>
+          </div>
+          <br />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {selectedSpecification?.map((specification, index) => (
+              <button
+                key={index}
+                onClick={() => handleSpecificationClick(specification)}
+                data-hs-overlay="#add-task"
+              >
+                <div
+                  className={`mb-4 box border-2 ${
+                    formStatus[specification.title] === "complete"
+                      ? "border-green"
                       : formStatus[specification.title] === "partial"
-                      ? "🔶 In Progress"
-                      : "🔲 Not Started"}
-                  </p>
+                      ? "border-yellow"
+                      : "border-gray"
+                  }`}
+                >
+                  <div className="box-body">
+                    <div className="card-text">
+                      <h4 className="text-lg font-semibold mb-2">
+                        {specification.title}
+                      </h4>
+                      <p className="text-sm">
+                        Status:{" "}
+                        {formStatus[specification.title] === "complete"
+                          ? "✅ Complete"
+                          : formStatus[specification.title] === "partial"
+                          ? "🔶 In Progress"
+                          : "🔲 Not Started"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div id="add-task" className="hs-overlay hidden ti-modal">
+            <div className="hs-overlay-open:mt-7 ti-modal-box mt-0 ease-out lg:!max-w-4xl lg:w-full m-3 lg:!mx-auto">
+              <div className="ti-modal-content">
+                <div className="ti-modal-header">
+                  <h6 className="modal-title text-[1rem] font-semibold text-default dark:text-defaulttextcolor/70">
+                    Specification Details
+                  </h6>
+                  <button
+                    type="button"
+                    className="hs-dropdown-toggle !text-[1rem] !font-semibold"
+                    data-hs-overlay="#add-task"
+                  >
+                    <span className="sr-only">Close</span>
+                    <i className="ri-close-line"></i>
+                  </button>
+                </div>
+                {renderDynamicForm()}
+                <div className="ti-modal-footer">
+                  <button
+                    type="button"
+                    className="hs-dropdown-toggle ti-btn ti-btn-light align-middle"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ti-btn bg-primary text-white !font-medium"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
             </div>
-          </button>
-        ))}
-      </div>
-      <div id="add-task" className="hs-overlay hidden ti-modal">
-        <div className="hs-overlay-open:mt-7 ti-modal-box mt-0 ease-out lg:!max-w-4xl lg:w-full m-3 lg:!mx-auto">
-          <div className="ti-modal-content">
-            <div className="ti-modal-header">
-              <h6 className="modal-title text-[1rem] font-semibold text-default dark:text-defaulttextcolor/70">
-                Specification Details
-              </h6>
-              <button
-                type="button"
-                className="hs-dropdown-toggle !text-[1rem] !font-semibold"
-                data-hs-overlay="#add-task"
-              >
-                <span className="sr-only">Close</span>
-                <i className="ri-close-line"></i>
-              </button>
-            </div>
-            {renderDynamicForm()}
-            <div className="ti-modal-footer">
-              <button
-                type="button"
-                className="hs-dropdown-toggle ti-btn ti-btn-light align-middle"
-                onClick={handleCancel}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="ti-btn bg-primary text-white !font-medium"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };
