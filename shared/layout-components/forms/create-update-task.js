@@ -369,7 +369,7 @@ const CreateUpdateTask = (props) => {
                   Task Owner ID
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
                   id="taskOwnerId"
                   onChange={handleInputChange}
