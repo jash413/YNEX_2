@@ -13,6 +13,7 @@ import { data } from "@/shared/data/tables/datatabledata";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import format from "date-fns/format";
+import Preloader from "../preloader/preloader";
 import { to } from "react-spring";
 
 const formDataSchema = z.object({
@@ -65,6 +66,11 @@ const CreateUpdateTask = (props) => {
   const [selectedTaskCostCodes, setSelectedTaskCostCodes] = useState([]);
   const [progress, setProgress] = useState(0);
   const [gcBusiness, setGcBuisness] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadingState = () => {
+    setLoading(true);
+  };
   const handleProgressChange = (event) => {
     setProgress(event.target.value);
   };
@@ -284,6 +290,7 @@ const CreateUpdateTask = (props) => {
         activepage={`${selectedProject?.attributes?.name || `Project Summary`}`}
         mainpageurl="/components/project-management/tasks"
         loadProjectData={getDataFromLocalStorage}
+        loadingState={loadingState}
       />
       <div className="flex justify-between">
         <div className="ml-auto"></div>

@@ -17,6 +17,7 @@ const today = new Date();
 const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import network from "@/config";
+import Preloader from "../preloader/preloader";
 import { set } from "date-fns";
 import { h } from "gridjs";
 
@@ -60,6 +61,11 @@ const CreateUpdateProject = (props) => {
 
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const loadingState = () => {
+    setLoading(true);
+  };
   
   useEffect(() => {
     if (window !== undefined) {
@@ -331,6 +337,7 @@ const CreateUpdateProject = (props) => {
         mainpageurl="/components/project-management/project-summary/"
         loadProjectData={getDataFromLocalStorage}
         createProject={false}
+        loadingState={loadingState}
         isDisabled={true}
       />
 

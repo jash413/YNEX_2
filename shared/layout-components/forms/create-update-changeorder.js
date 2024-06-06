@@ -15,6 +15,7 @@ const today = new Date();
 const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import { ToastContainer, toast } from "react-toastify";
+import Preloader from "../preloader/preloader";
 import "react-toastify/dist/ReactToastify.css";
 import network from "@/config";
 import { set } from "date-fns";
@@ -39,6 +40,11 @@ const CreateUpdateChangeOrder = (props) => {
   const [user, setUser] = useState(null);
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const loadingState = () => {
+    setLoading(true);
+  };
 
   const updateLocalStorage = () => {
     axios
@@ -247,6 +253,7 @@ const CreateUpdateChangeOrder = (props) => {
         mainpageurl="/components/project-management/project-summary/"
         loadProjectData={getDataFromLocalStorage}
         createProject={false}
+        loadingState={loadingState}
         isDisabled={true}
       />
 
