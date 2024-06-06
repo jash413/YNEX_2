@@ -22,6 +22,22 @@ const ViewTasks = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [gcBuisness, setGcBuisness] = useState([]);
+
+  useEffect(() => {
+    getProjectDataFromLocalStorage();
+    getTaskDataFromLocalStorage();
+  if(window !== undefined) {
+    const tasksArray = JSON.parse(localStorage.getItem("projectTasks"));
+    const completed = tasksArray.filter((task) => task.attributes.status === "Complete");
+    const inProgress = tasksArray.filter((task) => task.attributes.status === "In progress");
+    const pending = tasksArray.filter((task) => task.attributes.status === "Yet to Start");
+    setCompletedTasks(completed.length);
+    setInProgressTasks(inProgress.length);
+    setPendingTasks(pending.length);
+    setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
+  }
+  }, []);
 
   const setloader = () => {
     setLoading(true);
@@ -68,8 +84,11 @@ const ViewTasks = () => {
         row.attributes.end_date ? format(new Date(row.attributes.end_date), "dd-MMM-yyyy") : null,
     },
     {
-      Header: "Business ID",
+      Header: "Business",
       accessor: "attributes.business_id",
+      Cell : ({value}) => {
+        return gcBuisness?.find((business) => business.id === value)?.attributes.name || "";
+      }
     },
     {
       Header: "Status",
@@ -123,10 +142,7 @@ const ViewTasks = () => {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    getProjectDataFromLocalStorage();
-    getTaskDataFromLocalStorage();
-  }, []);
+ 
 
   return (
     <div>
