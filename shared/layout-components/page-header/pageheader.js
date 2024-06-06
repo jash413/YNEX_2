@@ -17,6 +17,66 @@ const fetchProjects = async (userid, token) => {
   }
 };
 
+const fetchProjectData = async (projectId, token) => {
+  try {
+    const [
+      tasksResponse,
+      changeOrdersResponse,
+      progressionNotesResponse,
+      userResponse,
+      gcBuisnessResponse,
+      specificationsResponse,
+    ] = await Promise.all([
+      axios.get(`${network.onlineUrl}api/task?filter[project]=${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      axios.get(
+        `${network.onlineUrl}api/change_Order?filter[project]=${projectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
+      axios.get(
+        `${network.onlineUrl}api/progression_Notes?filter[project]=${projectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
+      axios.get(`${network.onlineUrl}api/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      axios.get(`${network.onlineUrl}api/business?filter[type]=GC`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      axios.get(`/api/specifications/${projectId}`),
+    ]);
+
+    localStorage.setItem(
+      "projectTasks",
+      JSON.stringify(tasksResponse.data.body.data)
+    );
+    localStorage.setItem(
+      "projectChangeOrders",
+      JSON.stringify(changeOrdersResponse.data.body.data)
+    );
+    localStorage.setItem(
+      "projectProgressionNotes",
+      JSON.stringify(progressionNotesResponse.data.body.data)
+    );
+    localStorage.setItem("Users", JSON.stringify(userResponse.data.body.data));
+    localStorage.setItem(
+      "gcBuisness",
+      JSON.stringify(gcBuisnessResponse.data.body.data)
+    );
+    localStorage.setItem(
+      "projectSpecifications",
+      JSON.stringify(specificationsResponse.data)
+    );
+    localStorage.setItem(
+      "projectSelections",
+      JSON.stringify(specificationsResponse.data)
+    );
+  } catch (error) {
+    console.error("Error fetching project data:", error);
+  }
+};
+
 const Pageheader = ({
   loadProjectData,
   isDisabled,
@@ -34,14 +94,9 @@ const Pageheader = ({
   const userid =
     typeof window !== "undefined" ? localStorage.getItem("userid") : null;
 
-  const memoizedFetchProjects = useCallback(
-    () => fetchProjects(userid, token),
-    [userid, token]
-  );
-
   useEffect(() => {
     const loadProjects = async () => {
-      const projects = await memoizedFetchProjects();
+      const projects = await fetchProjects(userid, token);
       setProjectData(projects);
 
       const savedProject = localStorage.getItem("selectedProject");
@@ -55,93 +110,26 @@ const Pageheader = ({
     };
 
     loadProjects();
-  }, [memoizedFetchProjects]);
+  }, [userid, token]);
 
   const handleProjectSelect = useCallback(
     async (selectedOption) => {
       loadingState();
-      try {
-        const newSelectedProject = selectedOption
-          ? projectData.find((project) => project.id === selectedOption.value)
-          : null;
+      const newSelectedProject = selectedOption
+        ? projectData.find((project) => project.id === selectedOption.value)
+        : null;
 
-        setSelectedProject(newSelectedProject);
-        localStorage.setItem(
-          "selectedProject",
-          JSON.stringify(newSelectedProject)
-        );
+      setSelectedProject(newSelectedProject);
+      localStorage.setItem(
+        "selectedProject",
+        JSON.stringify(newSelectedProject)
+      );
 
-        if (newSelectedProject) {
-          const projectId = newSelectedProject.id;
-          const [
-            tasksResponse,
-            changeOrdersResponse,
-            progressionNotesResponse,
-            userResponse,
-            gcBuisnessResponse,
-            specificationsResponse,
-          ] = await Promise.all([
-            axios.get(
-              `${network.onlineUrl}api/task?filter[project]=${projectId}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            ),
-            axios.get(
-              `${network.onlineUrl}api/change_Order?filter[project]=${projectId}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            ),
-            axios.get(
-              `${network.onlineUrl}api/progression_Notes?filter[project]=${projectId}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            ),
-            axios.get(`${network.onlineUrl}api/user`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get(`${network.onlineUrl}api/business?filter[type]=GC`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get(`/api/specifications/${projectId}`),
-          ]);
-
-          localStorage.setItem(
-            "projectTasks",
-            JSON.stringify(tasksResponse.data.body.data)
-          );
-          localStorage.setItem(
-            "projectChangeOrders",
-            JSON.stringify(changeOrdersResponse.data.body.data)
-          );
-          localStorage.setItem(
-            "projectProgressionNotes",
-            JSON.stringify(progressionNotesResponse.data.body.data)
-          );
-          localStorage.setItem(
-            "Users",
-            JSON.stringify(userResponse.data.body.data)
-          );
-          localStorage.setItem(
-            "gcBuisness",
-            JSON.stringify(gcBuisnessResponse.data.body.data)
-          );
-          localStorage.setItem(
-            "projectSpecifications",
-            JSON.stringify(specificationsResponse.data)
-          );
-          localStorage.setItem(
-            "projectSelections",
-            JSON.stringify(specificationsResponse.data)
-          );
-        }
-
-        loadProjectData();
-      } catch (error) {
-        console.error("Error fetching project data:", error);
+      if (newSelectedProject) {
+        await fetchProjectData(newSelectedProject.id, token);
       }
+
+      loadProjectData();
     },
     [projectData, token, loadingState, loadProjectData]
   );
