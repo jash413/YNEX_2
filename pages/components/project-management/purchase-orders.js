@@ -4,6 +4,7 @@ import Seo from "@/shared/layout-components/seo/seo";
 import dynamic from "next/dynamic";
 import React from "react";
 import { ResponsiveDataTable } from "@/shared/data/tables/datatabledata";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const CountUp = dynamic(() => import("react-countup"), { ssr: false });
 
@@ -14,6 +15,12 @@ const PurchaseOrders = () => {
   const [completedPurchaseOrders, setCompletedPurchaseOrders] = useState(0);
   const [pendingPurchaseOrders, setPendingPurchaseOrders] = useState(0);
   const [inProgressPurchaseOrders, setInProgressPurchaseOrders] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const loadingState = () => {
+    setLoading(true);
+  };
+
   const COLUMNS = [
     {
       Header: "Active",
@@ -75,7 +82,7 @@ const PurchaseOrders = () => {
   ];
 
   const getProjectDataFromLocalStorage = () => {
-    if (
+    try {if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
     ) {
@@ -83,19 +90,15 @@ const PurchaseOrders = () => {
         localStorage.getItem("selectedProject")
       );
       setSelectedProject(selectedProject);
+      getPurchaseOrders();
     } else {
       setSelectedProject(null);
+    }}
+    finally {
+      setLoading(false);
     }
   };
-  const getUserDataFromLocalStorage = () => {
-    if (
-      localStorage.getItem("selectedUser") !== null &&
-      localStorage.getItem("selectedUser") !== "undefined"
-    ) {
-      const selectedUser = JSON.parse(localStorage.getItem("selectedUser"));
-      setSelectedUser(selectedUser);
-    }
-  };
+ 
   const getPurchaseOrders = () => {
     if (
       localStorage.getItem("purchaseOrders") !== null &&
@@ -107,7 +110,6 @@ const PurchaseOrders = () => {
   };
 
   useEffect(() => {
-    getUserDataFromLocalStorage();
     getProjectDataFromLocalStorage();
     getPurchaseOrders();
   }, []);
@@ -120,9 +122,9 @@ const PurchaseOrders = () => {
         mainpage="Purchase Orders"
         mainpageurl="/components/project-management/purchase-orders"
         loadProjectData={getProjectDataFromLocalStorage}
-        loadUserData={getUserDataFromLocalStorage}
+        loadingState={loadingState}
       />
-      <div className="box">
+      { loading ? <Preloader /> : (<><div className="box">
         <div className="box-body">
           <div className="grid grid-cols-3">
             <div className="p-6 border-r dark:border-defaultborder/10 border-solid col-md-3">
@@ -218,7 +220,7 @@ const PurchaseOrders = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div></>)}
     </div>
   );
 };

@@ -5,23 +5,31 @@ import React from "react";
 import PerfectScrollbar from "react-perfect-scrollbar";
 import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Select from "react-select";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { FilePond } from "react-filepond";
 import { format } from "date-fns";
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const ProgressionNotes = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [Users, setUsers] = useState(null);
   const [progressionNotes, setProgressionNotes] = useState(null);
   const [userid, setUserid] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ description: "", 
     notes_type: "",
     files: []
    });
   const [token, setToken] = useState(null);
   const [files, setFiles] = useState([]);
+
+  const loadingState = () => {
+    setLoading(true);
+  };
 
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -51,26 +59,18 @@ const ProgressionNotes = () => {
       files: [...formData.files, response[0].file_url],
     });
   };
-  const updateLocalStorage = () => {
-    axios
-      .get(`${network.onlineUrl}api/progression_Notes`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        if (response.data.status === 200) {
-          localStorage.setItem(
-            "projectProgressionNotes",
-            JSON.stringify(response.data.body.data)
-          );
-          setProgressionNotes(response.data.body.data);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+  
+  const getProgressionNotes = () => {
+    if(
+      localStorage.getItem("projectProgressionNotes") !== null &&
+      localStorage.getItem("projectProgressionNotes") !== "undefined"
+    )
+    {
+      setProgressionNotes(JSON.parse(localStorage.getItem("projectProgressionNotes")));
+    }
   };
+
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -98,18 +98,20 @@ const ProgressionNotes = () => {
       )
       .then((response) => {
         if (response.data.status === 201) {
+          toast.success("Note added successfully");
           updateLocalStorage();
           setForm({ description: "", notes_type: ""});
         }
       })
       .catch((error) => {
         console.log(error);
+        toast.error("Error adding note");
       });
     }
   };
 
   const getProjectDataFromLocalStorage = () => {
-    if (
+    try {if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
     ) {
@@ -117,6 +119,7 @@ const ProgressionNotes = () => {
         localStorage.getItem("selectedProject")
       );
       setSelectedProject(selectedProject);
+      getProgressionNotes();
     } else {
       setSelectedProject(null);
     }
@@ -125,6 +128,9 @@ const ProgressionNotes = () => {
       localStorage.getItem("token") !== "undefined"
     ) {
       setToken(localStorage.getItem("token"));
+    }}
+    finally{
+      setLoading(false);
     }
   };
 
@@ -142,6 +148,7 @@ const ProgressionNotes = () => {
   return (
     <div>
       <Seo title={"Chat"} />
+      <ToastContainer />
       <Pageheader
         activepage={`${
           selectedProject?.attributes?.name || `Progression Notes`
@@ -150,8 +157,9 @@ const ProgressionNotes = () => {
         mainpageurl="/components/project-management/project-summary/"
         loadProjectData={getProjectDataFromLocalStorage}
         createProject={true}
+        loadingState={loadingState}
       />
-      <div className="main-chart-wrapper p-2 gap-2 lg:flex">
+      {loading ? <Preloader/> : (<div className="main-chart-wrapper p-2 gap-2 lg:flex">
         <div className="main-chat-area border dark:border-defaultborder/10">
           <div className="sm:flex items-center p-2 border-b dark:border-defaultborder/10">
             <div className="flex items-center leading-none">
@@ -185,8 +193,8 @@ const ProgressionNotes = () => {
                 <li className="chat-day-label">
                   <span>Today</span>
                 </li>
-                {progressionNotes &&
-                  progressionNotes.map((note, index) => (
+                {progressionNotes?.length ?
+                  (progressionNotes.map((note, index) => (
                     <li className="chat-item-start" key={index}>
                       <div className="chat-list-inner">
                         <div className="chat-user-profile"></div>
@@ -221,7 +229,18 @@ const ProgressionNotes = () => {
                         </div>
                       </div>
                     </li>
-                  ))}
+                  ))) : (
+                    <li className="chat-item-start">
+                      <div className="chat-list-inner">
+                        <div className="chat-user-profile"></div>
+                        <div className="ms-4">
+                          <span className="chatting-user-info">
+                            <span className="chatnameperson">No notes yet</span>
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  )}
               </ul>
             </div>
           </PerfectScrollbar>
@@ -279,7 +298,7 @@ const ProgressionNotes = () => {
             </div>
           </form>
         </div>
-      </div>
+      </div>)}
     </div>
   );
 };

@@ -5,13 +5,19 @@ import React from "react";
 import "gantt-task-react/dist/index.css";
 import { useState, useEffect } from "react";
 import styles from "../../../public/assets/css/schedule.module.css";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const Schedule = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadingState = () => {
+    setLoading(true);
+  };
 
   const getProjectDataFromLocalStorage = () => {
-    if (
+    try {if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
     ) {
@@ -48,6 +54,9 @@ const Schedule = () => {
         }));
 
       setTasks(formattedTasks);
+    }}
+    finally {
+      setLoading(false);
     }
   };
 
@@ -85,8 +94,9 @@ const Schedule = () => {
         mainpageurl="/components/project-management/schedule/"
         loadProjectData={getProjectDataFromLocalStorage}
         createProject={true}
+        loadingState={loadingState}
       />
-      <div className="block">
+      {loading ? <Preloader/> : (<div className="block">
         {tasks.length !== 0 ? (
           <div className={styles.ganttContainer}>
             <Gantt
@@ -118,10 +128,10 @@ const Schedule = () => {
           </div>
         ) : (
           <div className={styles.noTasksContainer}>
-            <p>No tasks available for this project</p>
+            <p>No tasks with scheduled Start And End Dates for this project</p>
           </div>
         )}
-      </div>
+      </div>)}
     </div>
   );
 };

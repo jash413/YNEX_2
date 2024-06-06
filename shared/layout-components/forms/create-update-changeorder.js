@@ -14,6 +14,8 @@ const DatePicker = dynamic(() => import("react-datepicker"), { ssr: false });
 const today = new Date();
 const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import network from "@/config";
 import { set } from "date-fns";
 
@@ -46,7 +48,10 @@ const CreateUpdateChangeOrder = (props) => {
         },
       })
       .then((response) => {
-        localStorage.setItem("projectChangeOrders", JSON.stringify(response.data.body.data));
+        localStorage.setItem(
+          "projectChangeOrders",
+          JSON.stringify(response.data.body.data)
+        );
       })
       .catch((error) => {
         console.log(error);
@@ -72,7 +77,6 @@ const CreateUpdateChangeOrder = (props) => {
       )
       .then((response) => {
         console.log(response);
-        
       })
       .catch((error) => {
         console.log(error);
@@ -117,12 +121,13 @@ const CreateUpdateChangeOrder = (props) => {
         )
         .then((response) => {
           console.log(response);
-          if(response.data.status === 200){
+          if (response.data.status === 200) {
             updateLocalStorage();
+            toast.success("Change Order Updated Successfully");
           }
         })
         .catch((error) => {
-          console.log(error);
+          toast.error("Error Updating Change Order");
         });
     } else {
       axios
@@ -155,12 +160,13 @@ const CreateUpdateChangeOrder = (props) => {
         )
         .then((response) => {
           console.log(response);
-          if(response.data.status === 201){
+          if (response.data.status === 201) {
             updateLocalStorage();
+            toast.success("Change Order Created Successfully");
           }
         })
         .catch((error) => {
-          console.log(error);
+          toast.error("Error Creating Change Order");
         });
     }
   };
@@ -175,21 +181,24 @@ const CreateUpdateChangeOrder = (props) => {
       setToken(localStorage.getItem("token"));
       setUser(JSON.parse(localStorage.getItem("userid")));
     }
-    if(formType === "update" && token !== ""){
+    if (formType === "update" && token !== "") {
       axios
-      .get(`${network.onlineUrl}api/change_Order/${props.changeOrderId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        setFormData(response.data.body.data.attributes);
-      }
-      )
-      .catch((error) => {
-        console.log(error);
-      }
-      );
+        .get(`${network.onlineUrl}api/change_Order/${props.changeOrderId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          setFormData(response.data.body.data.attributes);
+          setFiles(
+            response.data.body.data.attributes.document_urls.map((url) => {
+              return { source: url };
+            })
+          );
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
   }, [token]);
 
@@ -231,6 +240,7 @@ const CreateUpdateChangeOrder = (props) => {
           formType === "update" ? "Update Change Order" : "Create Change Order"
         }`}
       />
+      <ToastContainer />
       <Pageheader
         mainpage={`${formType === "update" ? "Update" : "Create"} Change Order`}
         activepage={`${selectedProject?.attributes?.name || `Project Summary`}`}

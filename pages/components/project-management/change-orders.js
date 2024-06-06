@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import React from "react";
 import { Cell } from "gridjs";
 const CountUp = dynamic(() => import("react-countup"), { ssr: false });
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const ChangeOrders = () => {
   const [selectedProject, setSelectedProject] = useState(null);
@@ -15,6 +16,12 @@ const ChangeOrders = () => {
   const [completedChangeOrders, setCompletedChangeOrders] = useState(0);
   const [pendingChangeOrders, setPendingChangeOrders] = useState(0);
   const [inProgressChangeOrders, setInProgressChangeOrders] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const loadingState = () => {
+    setLoading(true);
+  };
+
   const Users =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("Users"))
@@ -103,7 +110,7 @@ const ChangeOrders = () => {
   ];
 
   const getProjectDataFromLocalStorage = () => {
-    if (
+   try { if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
     ) {
@@ -113,17 +120,13 @@ const ChangeOrders = () => {
       setSelectedProject(selectedProject);
     } else {
       setSelectedProject(null);
+      getChangeOrders();
+    }}
+    finally {
+      setLoading(false);
     }
   };
-  const getUserDataFromLocalStorage = () => {
-    if (
-      localStorage.getItem("selectedUser") !== null &&
-      localStorage.getItem("selectedUser") !== "undefined"
-    ) {
-      const selectedUser = JSON.parse(localStorage.getItem("selectedUser"));
-      setSelectedUser(selectedUser);
-    }
-  };
+
   const getChangeOrders = () => {
     if (
       localStorage.getItem("projectChangeOrders") !== null &&
@@ -137,7 +140,6 @@ const ChangeOrders = () => {
   };
 
   useEffect(() => {
-    getUserDataFromLocalStorage();
     getProjectDataFromLocalStorage();
     getChangeOrders();
   }, []);
@@ -150,8 +152,10 @@ const ChangeOrders = () => {
         mainpage="Change Orders"
         mainpageurl="/components/project-management/change-orders"
         loadProjectData={getProjectDataFromLocalStorage}
-        loadUserData={getUserDataFromLocalStorage}
+        loadingState={loadingState}
       />
+      {loading ? <Preloader /> :
+      <>
       <div className="box">
         <div className="box-body">
           <div className="grid grid-cols-3">
@@ -255,6 +259,8 @@ const ChangeOrders = () => {
           </div>
         </div>
       </div>
+      </>
+      }
     </div>
   );
 };

@@ -10,7 +10,10 @@ const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import network from "@/config";
 import { data } from "@/shared/data/tables/datatabledata";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import format from "date-fns/format";
+import { to } from "react-spring";
 
 const formDataSchema = z.object({
   task_amount_from_sub: z
@@ -83,7 +86,7 @@ const CreateUpdateTask = (props) => {
         })
         .then((response) => {
           const task = response.data.body.data.attributes;
-          console.log(task);
+          setFiles(task.files_urls.map((file_url) => ({ source: file_url })));
           setFormData({
             taskCode: task.task_code_id,
             taskName: task.task_name,
@@ -191,13 +194,13 @@ const CreateUpdateTask = (props) => {
           )
           .then((response) => {
             if (response.status === 200) {
-              console.log("Task updated successfully");
               updateTasksLocal();
+              toast.success("Task updated successfully");
             }
             console.log(response);
           })
           .catch((error) => {
-            console.log(error);
+            toast.error("Error updating task");
           });
       } else {
         axios
@@ -237,14 +240,14 @@ const CreateUpdateTask = (props) => {
           )
           .then((response) => {
             if (response.data.status === 201) {
-              console.log("Task created successfully");
               updateTasksLocal();
               setFormData({});
+              toast.success("Task created successfully");
             }
             console.log(response);
           })
           .catch((error) => {
-            console.log(error);
+            toast.error("Error creating task");
           });
       }
     } catch (error) {
@@ -275,6 +278,7 @@ const CreateUpdateTask = (props) => {
   return (
     <div>
       <Seo title={`${formType === "update" ? "Update Task" : "Create Task"}`} />
+      <ToastContainer />
       <Pageheader
         mainpage={`${formType === "update" ? "Update" : "Create"} Task`}
         activepage={`${selectedProject?.attributes?.name || `Project Summary`}`}

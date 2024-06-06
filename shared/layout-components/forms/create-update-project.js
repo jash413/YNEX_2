@@ -5,6 +5,8 @@ import axios from "axios";
 import Select from "react-select";
 import { z } from "zod";
 import { SingleButtons } from "@/shared/data/ui-elements/dropdownsdata";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 const MultiSelect = dynamic(() => import("react-multi-select-component"), {
@@ -58,37 +60,7 @@ const CreateUpdateProject = (props) => {
 
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
-  const getSetFiles = async (urls) => {
-    const fetchedFiles = [];
-    for (const url of urls) {
-      try {
-        // Get the redirected URL
-        const response = await axios.get(`${network.onlineUrl}api/download_file/?filename=${url}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          maxRedirects: 0, // Prevent following the redirect
-          validateStatus: (status) => status >= 200 && status < 300, // Accept all 2xx status codes
-        });
-
-        console.log(response.headers);
   
-        // If the response is a redirect, get the redirected URL
-        const redirectedUrl = response.headers.location;
-
-  
-        if (redirectedUrl) {
-          fetchedFiles.push(redirectedUrl);
-        } else {
-          console.error(`No redirect URL found for ${url}`);
-        }
-      } catch (error) {
-        console.error(`Error fetching file: ${error}`);
-      }
-    }
-  
-    return fetchedFiles;
-  };
   useEffect(() => {
     if (window !== undefined) {
       setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
@@ -136,7 +108,7 @@ const CreateUpdateProject = (props) => {
       .then((data) => setMultiselectdata(data.data))
       .catch((error) => console.error("Error:", error));
   }, []);
-
+ 
   useEffect(() => {
     getDataFromLocalStorage();
     if (window !== undefined) {
@@ -151,7 +123,7 @@ const CreateUpdateProject = (props) => {
         })
         .then((response) => {
           const project = response.data.body.data;
-          setFiles(getSetFiles(project.attributes.document_urls));
+          setFiles( project.attributes.document_urls.map((file) => ({ source: file }) ));
           setFormData({
             selectedProject: project.id,
             description: project.attributes.description,
@@ -233,7 +205,7 @@ const CreateUpdateProject = (props) => {
           }
         )
         .then((response) => {
-          console.log(response);
+          if(response.data.status == 200){
           setFormData({
             name: "",
             description: "",
@@ -247,9 +219,30 @@ const CreateUpdateProject = (props) => {
             end_date: "", // End date
             files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
           });
+          toast.success('Project Updated Successfully', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+
+          }
         })
         .catch((error) => {
-          console.log(error);
+          toast.error('Error in updating project', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
         });
     }
 
@@ -299,15 +292,36 @@ const CreateUpdateProject = (props) => {
             end_date: "", // End date
             files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
           });
+          toast.success('Project Created Successfully', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
         })
         .catch((error) => {
-          console.log(error);
+          toast.error('Error in creating project', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+
         });
     }
   };
 
   return (
     <div>
+      <ToastContainer />
       <Seo
         title={`${formType === "update" ? "Update Project" : "Create Project"}`}
       />

@@ -2,13 +2,14 @@ import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Seo from "@/shared/layout-components/seo/seo";
 import React, { useState, useEffect } from "react";
 import { ResponsiveDataTable } from "@/shared/data/tables/datatabledata";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, set } from "date-fns";
 import { ReactTabulator } from "react-tabulator";
 import Link from "next/link";
 import axios from "axios";
 import network from "@/config";
 import { useTable, useSortBy, useGlobalFilter } from "react-table";
 import take from "reducers/take";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const ViewTasks = () => {
   const [addToCompareTask, setAddToCompareTask] = useState([]);
@@ -20,6 +21,11 @@ const ViewTasks = () => {
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const setloader = () => {
+    setLoading(true);
+  }
 
   const COLUMNS = [
     {
@@ -92,7 +98,7 @@ const ViewTasks = () => {
   ];
 
   const getProjectDataFromLocalStorage = () => {
-    if (
+     if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
     ) {
@@ -100,26 +106,21 @@ const ViewTasks = () => {
         localStorage.getItem("selectedProject")
       );
       setSelectedProject(selectedProject);
+      getTaskDataFromLocalStorage();
     } else {
       setSelectedProject(null);
     }
   };
-  const getUserDataFromLocalStorage = () => {
-    if (
-      localStorage.getItem("selectedUser") !== null &&
-      localStorage.getItem("selectedUser") !== "undefined"
-    ) {
-      const selectedUser = JSON.parse(localStorage.getItem("selectedUser"));
-      setSelectedUser(selectedUser);
-    }
-  };
   const getTaskDataFromLocalStorage = () => {
-    if (
+    try{if (
       localStorage.getItem("projectTasks") !== null &&
       localStorage.getItem("projectTasks") !== "undefined"
     ) {
       const tasks = JSON.parse(localStorage.getItem("projectTasks"));
       setTasks(tasks);
+    }}
+    finally{
+      setLoading(false);
     }
   };
   useEffect(() => {
@@ -166,8 +167,10 @@ const ViewTasks = () => {
         mainpage="Tasks"
         mainpageurl="/components/project-management/tasks"
         loadProjectData={getProjectDataFromLocalStorage}
-        loadUserData={getUserDataFromLocalStorage}
+        loadingState={setloader}
       />
+      {loading ? <Preloader /> :
+      <>
       <div className="box">
         <div className="box-body">
           <div className="grid grid-cols-3">
@@ -280,6 +283,8 @@ const ViewTasks = () => {
           </div>
         </div>
       </div>
+      </>
+}
     </div>
   );
 };

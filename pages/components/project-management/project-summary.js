@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 import axios from "axios";
 import WorldMap from "react-svg-worldmap";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 import network from "@/config";
 import { use } from "echarts";
 
@@ -14,6 +15,12 @@ const ProjectSummary = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [projectData, setProjectData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const setloader = () => {
+    setLoading(true);
+  }
+
 
   useEffect(() => {
     setClientRender(true);
@@ -37,6 +44,7 @@ const ProjectSummary = () => {
   }, []);
 
   const getProjectDataFromLocalStorage = () => {
+    try{
     if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
@@ -48,6 +56,11 @@ const ProjectSummary = () => {
     } else {
       setSelectedProject(null);
     }
+  }
+    finally {
+      setLoading(false);
+    }
+
   };
   return (
     <Fragment>
@@ -58,8 +71,9 @@ const ProjectSummary = () => {
         mainpageurl="/components/project-management/project-summary/"
         loadProjectData={getProjectDataFromLocalStorage}
         createProject={true}
+        loadingState={setloader}
       />
-      {selectedProject && (
+      {(selectedProject && !loading) ? (
         <>
         <div className="flex">
           <button
@@ -130,9 +144,9 @@ const ProjectSummary = () => {
                     </p>
                     <p className="mb-2 text-[0.75rem]">
                       <span className="text-[1.5625rem] font-semibold leading-none vertical-bottom mb-0">
-                        {`$${parseInt(
-                          selectedProject?.attributes.budget_estimated
-                        ).toLocaleString()}`}{" "}
+                      {`$${parseInt(
+  selectedProject?.attributes.budget_estimated || 0
+).toLocaleString()}`}{" "}
                       </span>
                     </p>
                   </div>
@@ -179,7 +193,7 @@ const ProjectSummary = () => {
                     <p className="mb-2 text-[0.75rem]">
                       <span className="text-[1.5625rem] font-semibold leading-none vertical-bottom mb-0">
                         {`$${parseInt(
-                          selectedProject?.attributes.actual_spent
+                          selectedProject?.attributes.actual_spent || 0
                         ).toLocaleString()}`}
                       </span>
                     </p>
@@ -208,10 +222,7 @@ const ProjectSummary = () => {
             </div>
           </div>
         </div>
-        </>
-      )}
-
-      {selectedProject && (
+        
         <div className="grid grid-cols-12 gap-6">
           <div className="xl:col-span-6 md:col-span-6  col-span-12">
             <div className="box custom-box">
@@ -1709,9 +1720,8 @@ const ProjectSummary = () => {
             </div>
           </div>
         </div>
-      )}
       <div className="grid grid-cols-12 gap-x-6">
-        {selectedProject && (
+
           <div className="xxl:col-span-6 xl:col-span-6 col-span-12">
             <div className="box">
               <div className="box-header justify-between">
@@ -1912,8 +1922,8 @@ const ProjectSummary = () => {
               </div>
             </div>
           </div>
-        )}
-        {selectedProject && (
+
+  
           <div className="xl:col-span-6 lg:col-span-6 md:col-span-6 sm:col-span-12 col-span-12">
             <div className="box custom-box">
               <div className="box-header">
@@ -1953,8 +1963,13 @@ const ProjectSummary = () => {
               </div>
             </div>
           </div>
-        )}
       </div>
+      </>
+    ) : (
+      <Preloader />
+
+  )
+  }
     </Fragment>
   );
 };
