@@ -84,6 +84,7 @@ const Kanbanboard = () => {
 
         drake.on("drop", (el, target, source) => {
           const taskId = el.getAttribute("data-task-id");
+
           const newStatus =
             classNameToStatus[
               target.getAttribute("data-view-btn").split("-")[0]
@@ -201,7 +202,7 @@ const Kanbanboard = () => {
         createProject={false}
       />
       <div className="ynex-kanban-board text-defaulttextcolor dark:text-defaulttextcolor/70 text-defaultsize">
-        <div className="kanban-view flex">
+          <div className="kanban-view flex">
           {allStatuses.map((status) => (
             <div
               className={`kanban-column kanban-tasks-type ${statusToClassName[status]}`}

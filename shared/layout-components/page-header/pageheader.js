@@ -46,7 +46,7 @@ const fetchProjectData = async (projectId, token) => {
       axios.get(`${network.onlineUrl}api/user`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      axios.get(`${network.onlineUrl}api/business?filter[type]=GC`, {
+      axios.get(`${network.onlineUrl}api/business`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
       axios.get(`/api/specifications/${projectId}`),
