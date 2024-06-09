@@ -186,7 +186,7 @@ const ViewTasks = () => {
         loadProjectData={getProjectDataFromLocalStorage}
         loadingState={setloader}
       />
-      {loading ? <Preloader /> :
+      {loading ? <Preloader /> : (selectedProject) ?(
       <>
       <div className="box">
         <div className="box-body">
@@ -301,6 +301,15 @@ const ViewTasks = () => {
         </div>
       </div>
       </>
+      ) : (
+        <div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+            <h1 className="text-center">No project selected</h1>
+            </div>
+          </div>
+        </div>
+      )
 }
     </div>
   );
