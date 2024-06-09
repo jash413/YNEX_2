@@ -46,6 +46,7 @@ const ChangeOrders = () => {
     {
       Header: "Active",
       accessor: "attributes.active",
+      Cell: ({ value }) => (value ? "Yes" : "No"),
     },
     {
       Header: "Creator",
@@ -81,6 +82,7 @@ const ChangeOrders = () => {
     {
       Header: "Increase Budget",
       accessor: "attributes.increaase_budget",
+      Cell: ({ value }) => (value ? "Yes" : "No"),
     },
     {
       Header: "Payment Terms",

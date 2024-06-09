@@ -250,11 +250,11 @@ const PurchaseOrders = () => {
               <button
                   type="button"
                   className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !text-[0.75rem]"
-                  data-hs-overlay="#create-changeorder"
+                  data-hs-overlay="#create-purchaseorder"
                 >
-                  <Link href="/components/project-management/create-changeorder/">
+                  <Link href="/components/project-management/create-purchaseorder/">
                     <i className="ri-add-line font-semibold align-middle"></i>{" "}
-                    Create Change Order
+                    Create Purchase Order
                   </Link>
                 </button>
                 
