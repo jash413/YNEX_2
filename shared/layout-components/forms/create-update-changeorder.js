@@ -134,7 +134,7 @@ const CreateUpdateChangeOrder = (props) => {
             updateLocalStorage();
             toast.success("Change Order Updated Successfully");
             setTimeout(() => {
-              router.push("/components/project-management/change-order/");
+              router.push("/components/project-management/change-orders/");
             }, 1000);
 
           }
@@ -177,7 +177,7 @@ const CreateUpdateChangeOrder = (props) => {
             updateLocalStorage();
             toast.success("Change Order Created Successfully");
             setTimeout(() => {
-              router.push("/components/project-management/change-order/");
+              router.push("/components/project-management/change-orders/");
             }, 1000);
           }
         })
