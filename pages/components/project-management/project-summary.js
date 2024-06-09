@@ -73,7 +73,10 @@ const ProjectSummary = () => {
         createProject={true}
         loadingState={setloader}
       />
-      {(!loading) ? (
+      {(loading) ? (
+      <Preloader />
+
+  ) : (selectedProject) ? (
         <>
         <div className="flex">
           <button
@@ -1965,10 +1968,14 @@ const ProjectSummary = () => {
           </div>
       </div>
       </>
-    ) : (
-      <Preloader />
-
-  )
+    ) : 
+    (<div className="box">
+      <div className="box-body">
+        <div className="flex items-center justify-center">
+        <h1 className="text-center">No project selected</h1>
+        </div>
+      </div>
+    </div>)
   }
     </Fragment>
   );

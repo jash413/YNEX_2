@@ -8,6 +8,9 @@ import axios from "axios";
 const Select = dynamic(() => import("react-select"), { ssr: false });
 import DatePicker from "react-datepicker";
 import { format, differenceInDays } from "date-fns";
+import Preloader from "@/shared/layout-components/preloader/preloader";
+import { ToastContainer, toast } from "react-toastify";
+
 
 import { FilePond, registerPlugin } from "react-filepond";
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
@@ -120,6 +123,7 @@ const Kanbanboard = () => {
               .then((response) => {
                 if (response.data.status === 200) {
                   updateTasksLocal();
+                  toast.success("Task status updated successfully");
                 }
               })
               .catch((error) => {
@@ -201,6 +205,7 @@ const Kanbanboard = () => {
         loadProjectData={getDataFromLocalStorage}
         createProject={false}
       />
+      (loading) ? <Preloader /> : (selectedProject) ? (
       <div className="ynex-kanban-board text-defaulttextcolor dark:text-defaulttextcolor/70 text-defaultsize">
           <div className="kanban-view flex">
           {allStatuses.map((status) => (
@@ -246,7 +251,14 @@ const Kanbanboard = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div>) : (
+        <div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+            <h1 className="text-center">No project selected</h1>
+            </div>
+          </div>
+        </div>)
     </div>
   );
 };

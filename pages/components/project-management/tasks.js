@@ -25,9 +25,10 @@ const ViewTasks = () => {
   const [gcBuisness, setGcBuisness] = useState([]);
 
   useEffect(() => {
+    
+  if(window !== undefined) {
     getProjectDataFromLocalStorage();
     getTaskDataFromLocalStorage();
-  if(window !== undefined) {
     const tasksArray = JSON.parse(localStorage.getItem("projectTasks"));
     const completed = tasksArray.filter((task) => task.attributes.status === "Complete");
     const inProgress = tasksArray.filter((task) => task.attributes.status === "In progress");

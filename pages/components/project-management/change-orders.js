@@ -158,7 +158,7 @@ const ChangeOrders = () => {
         loadProjectData={getProjectDataFromLocalStorage}
         loadingState={loadingState}
       />
-      {loading ? <Preloader /> :
+      {loading ? <Preloader /> : (selectedProject) ? (
       <>
       <div className="box">
         <div className="box-body">
@@ -263,7 +263,15 @@ const ChangeOrders = () => {
           </div>
         </div>
       </div>
-      </>
+      </> ) : (
+        <div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+            <h1 className="text-center">No project selected</h1>
+            </div>
+          </div>
+        </div>
+      )
       }
     </div>
   );

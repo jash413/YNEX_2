@@ -96,7 +96,7 @@ const Schedule = () => {
         createProject={true}
         loadingState={loadingState}
       />
-      {loading ? <Preloader/> : (<div className="block">
+      {loading ? <Preloader/> : (selectedProject) ? (<div className="block">
         {tasks.length !== 0 ? (
           <div className={styles.ganttContainer}>
             <Gantt
@@ -131,7 +131,13 @@ const Schedule = () => {
             <p>No tasks with scheduled Start And End Dates for this project</p>
           </div>
         )}
-      </div>)}
+      </div>) : (<div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+            <h1 className="text-center">No project selected</h1>
+            </div>
+          </div>
+        </div>)}
     </div>
   );
 };
