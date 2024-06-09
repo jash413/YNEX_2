@@ -55,8 +55,8 @@ const ProgressionNotes = () => {
     });
 
     setFormData({
-      ...formData,
-      files: [...formData.files, response[0].file_url],
+      ...form,
+      files: [...formDfiles, response[0].file_url],
     });
   };
   
@@ -108,6 +108,26 @@ const ProgressionNotes = () => {
         toast.error("Error adding note");
       });
     }
+  };
+  const updateLocalStorage = () => {
+    axios
+      .get(`${network.onlineUrl}api/progression_Notes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        if (response.data.status === 200) {
+          localStorage.setItem(
+            "projectProgressionNotes",
+            JSON.stringify(response.data.body.data)
+          );
+          setProgressionNotes(response.data.body.data);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   const getProjectDataFromLocalStorage = () => {

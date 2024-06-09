@@ -114,6 +114,29 @@ const CreateUpdateProject = (props) => {
       .then((data) => setMultiselectdata(data.data))
       .catch((error) => console.error("Error:", error));
   }, []);
+
+  async function fetchAndSetFiles(fileNames, setFiles) {
+    const files = await Promise.all(
+        fileNames.map(async (fileName) => {
+            let response = await fetch(`${network.onlineUrl}api/download_file/?filename=${fileName}`, {
+              headers: {
+                  'Authorization': `Bearer ${token}`
+              },
+              redirect: 'manual' // to prevent automatic following of redirects
+          });
+            if (response.status === 302) {
+                // Follow the redirect
+                const redirectUrl = response.headers.get('Location');
+                response = await fetch(redirectUrl);
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.blob();
+        })
+    );
+    setFiles(files.map((file) => ({ source: file })));
+}
  
   useEffect(() => {
     getDataFromLocalStorage();
@@ -129,7 +152,8 @@ const CreateUpdateProject = (props) => {
         })
         .then((response) => {
           const project = response.data.body.data;
-          setFiles( project.attributes.document_urls.map((file) => ({ source: file }) ));
+          fetchAndSetFiles(project.attributes.document_urls, setFiles)
+    .catch(e => console.log('There was a problem with the fetch operation: ' + e.message));
           setFormData({
             selectedProject: project.id,
             description: project.attributes.description,
