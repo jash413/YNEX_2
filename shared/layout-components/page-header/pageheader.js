@@ -4,6 +4,89 @@ import Select from "react-select";
 import Link from "next/link";
 import network from "../../../config";
 
+const fetchProjects = async (userid, token) => {
+  try {
+    const response = await axios.get(
+      `${network.onlineUrl}api/project?filter[home_owner]=${userid}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data.body.data;
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return [];
+  }
+};
+
+const fetchProjectData = async (projectId, token) => {
+  try {
+    const [
+      tasksResponse,
+      changeOrdersResponse,
+      purchaseOrdersResponse,
+      progressionNotesResponse,
+      userResponse,
+      gcBuisnessResponse,
+      specificationsResponse,
+    ] = await Promise.all([
+      axios.get(`${network.onlineUrl}api/task?filter[project]=${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      axios.get(
+        `${network.onlineUrl}api/change_Order?filter[project]=${projectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
+      axios.get(
+        `${network.onlineUrl}api/purchase_Order?filter[project]=${projectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
+      axios.get(
+        `${network.onlineUrl}api/progression_Notes?filter[project]=${projectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
+      axios.get(`${network.onlineUrl}api/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      axios.get(`${network.onlineUrl}api/business`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      axios.get(`/api/specifications/${projectId}`),
+    ]);
+
+    localStorage.setItem(
+      "projectTasks",
+      JSON.stringify(tasksResponse.data.body.data)
+    );
+    localStorage.setItem(
+      "projectChangeOrders",
+      JSON.stringify(changeOrdersResponse.data.body.data)
+    );
+    localStorage.setItem(
+      "projectPurchaseOrders",
+      JSON.stringify(purchaseOrdersResponse.data.body.data)
+    );
+
+    localStorage.setItem(
+      "projectProgressionNotes",
+      JSON.stringify(progressionNotesResponse.data.body.data)
+    );
+    localStorage.setItem("Users", JSON.stringify(userResponse.data.body.data));
+    localStorage.setItem(
+      "gcBuisness",
+      JSON.stringify(gcBuisnessResponse.data.body.data)
+    );
+    localStorage.setItem(
+      "projectSpecifications",
+      JSON.stringify(specificationsResponse.data)
+    );
+    localStorage.setItem(
+      "projectSelections",
+      JSON.stringify(specificationsResponse.data)
+    );
+  } catch (error) {
+    console.error("Error fetching project data:", error);
+  }
+};
+
 const Pageheader = ({
   loadProjectData,
   isDisabled,

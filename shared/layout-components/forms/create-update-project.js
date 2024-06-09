@@ -8,6 +8,7 @@ import { SingleButtons } from "@/shared/data/ui-elements/dropdownsdata";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 const MultiSelect = dynamic(() => import("react-multi-select-component"), {
   ssr: false,
@@ -38,6 +39,7 @@ const formDataSchema = z.object({
 
 
 const CreateUpdateProject = (props) => {
+  const router = useRouter();
   const formType = props.formType;
   const [formData, setFormData] = useState({
     selectedProject: "",
@@ -122,6 +124,7 @@ const CreateUpdateProject = (props) => {
               headers: {
                   'Authorization': `Bearer ${token}`
               },
+              redirect: 'manual',
           });
           console.log(response);
             if (response.status === 302) {
@@ -259,8 +262,13 @@ const CreateUpdateProject = (props) => {
             progress: undefined,
             theme: "light",
             });
+            setTimeout(() => {
+              router.push("/components/project-management/project-summary/");
+            }, 1000);
+
 
           }
+
         })
         .catch((error) => {
           toast.error('Error in updating project', {
@@ -332,6 +340,9 @@ const CreateUpdateProject = (props) => {
             progress: undefined,
             theme: "light",
             });
+            setTimeout(() => {
+              router.push("/components/project-management/project-summary/");
+            }, 1000);
         })
         .catch((error) => {
           toast.error('Error in creating project', {

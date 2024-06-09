@@ -2,21 +2,13 @@ import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Seo from "@/shared/layout-components/seo/seo";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PerfectScrollbar from "react-perfect-scrollbar";
-import axios from "axios"; // Add axios for HTTP requests
+import axios from "axios";
 const Select = dynamic(() => import("react-select"), { ssr: false });
 import DatePicker from "react-datepicker";
-import {
-  addDays,
-  setHours,
-  setMinutes,
-  format,
-  differenceInDays,
-  set,
-} from "date-fns";
+import { format, differenceInDays } from "date-fns";
 
-//filepond
 import { FilePond, registerPlugin } from "react-filepond";
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
@@ -25,16 +17,22 @@ registerPlugin(FilePondPluginImagePreview, FilePondPluginImageExifOrientation);
 
 const Kanbanboard = () => {
   const statusToClassName = {
-    "Yet to Start": "new",
-    "In progress": "in-progress",
-    Delayed: "todo",
-    Complete: "completed",
+    yettostart: "new",
+    inprogress: "inprogress",
+    delayed: "todo",
+    complete: "completed",
   };
   const classNameToStatus = {
-    new: "Yet to Start",
-    "in-progress": "In progress",
-    todo: "Delayed",
-    completed: "Complete",
+    new: "yettostart",
+    inprogress: "inprogress",
+    todo: "delayed",
+    completed: "complete",
+  };
+  const statusToPayload = {
+    yettostart: "Yet to Start",
+    inprogress: "In Progress",
+    delayed: "Delayed",
+    complete: "Complete",
   };
 
   const [tasks, setTasks] = useState([]);
@@ -46,65 +44,94 @@ const Kanbanboard = () => {
   const delayedTasksRef = useRef(null);
   const completedTasksRef = useRef(null);
 
+  const updateTasksLocal = () => {
+    if (selectedProject) {
+      axios
+        .get(
+          `${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        )
+        .then((response) => {
+          localStorage.setItem(
+            "projectTasks",
+            JSON.stringify(response.data.body.data)
+          );
+        })
+        .catch((error) => {
+          console.error("Error fetching tasks:", error);
+        });
+    }
+  };
+
   useEffect(() => {
     getDataFromLocalStorage();
     setTasks(JSON.parse(localStorage.getItem("projectTasks")) || []);
 
-    if(window !== undefined){
-    const dragula = require("dragula");
-    
+    if (window !== undefined) {
+      const dragula = require("dragula");
 
-    const containers = [
-      newTasksRef.current,
-      inProgressTasksRef.current,
-      delayedTasksRef.current,
-      completedTasksRef.current,
-    ].filter(Boolean); // Filter out null refs
+      const containers = [
+        newTasksRef.current,
+        inProgressTasksRef.current,
+        delayedTasksRef.current,
+        completedTasksRef.current,
+      ].filter(Boolean);
 
-    if (containers.length > 0) {
-      const drake = dragula(containers);
+      if (containers.length > 0) {
+        const drake = dragula(containers);
 
-      drake.on("drop", (el, target, source, sibling) => {
-        const taskId = el.getAttribute("data-task-id");
-        const newStatus = target.getAttribute("data-status");
+        drake.on("drop", (el, target, source) => {
+          const taskId = el.getAttribute("data-task-id");
 
+          const newStatus =
+            classNameToStatus[
+              target.getAttribute("data-view-btn").split("-")[0]
+            ];
+          const oldStatus =
+            classNameToStatus[
+              source.getAttribute("data-view-btn").split("-")[0]
+            ];
 
-        // Send PATCH request to update the status
-        axios
-          .patch(
-            `${network.onlineUrl}api/task/${taskId}`,
-            { data: { attributes: { status: newStatus } } },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
-          .then((response) => {
-            // Update the local state if the request is successful
-            setTasks((prevTasks) => {
-              const updatedTasks = prevTasks.map((task) => {
-                if (task.id === taskId) {
-                  return {
-                    ...task,
-                    attributes: { ...task.attributes, status: newStatus },
-                  };
+          if (newStatus !== oldStatus) {
+            const task = tasks.find((task) => task.id == taskId);
+            if(task){
+              const { status, ...rest } = task.attributes;
+            axios
+              .patch(
+                `${network.onlineUrl}api/task/${taskId}`,
+                {
+                  data: {
+                    id: taskId,
+                    type: "task",
+                    attributes: {
+                      ...rest,
+                      status: statusToPayload[newStatus],
+                    },
+                  },
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
                 }
-                return task;
+              )
+              .then((response) => {
+                if (response.data.status === 200) {
+                  updateTasksLocal();
+                }
+              })
+              .catch((error) => {
+                console.error("Error updating task status:", error);
+                drake.cancel(true);
               });
-              return updatedTasks;
-            });
-          })
-          .catch((error) => {
-            console.error("Error updating task status:", error);
-            // Optionally, revert the change if the request fails
-            drake.cancel(true);
-          });
-      });
-    }
+          }}
+        });
+      }
 
-    OnDivChange();
-  }
+      OnDivChange();
+    }
   }, [token]);
 
   const getDataFromLocalStorage = () => {
@@ -123,10 +150,11 @@ const Kanbanboard = () => {
   const groupedTasks = tasks?.reduce((acc, task) => {
     const { status } = task.attributes;
     if (status) {
-      if (!acc[status]) {
-        acc[status] = [];
+      const lowercaseStatus = status.toLowerCase().replace(/\s/g, "");
+      if (!acc[lowercaseStatus]) {
+        acc[lowercaseStatus] = [];
       }
-      acc[status].push(task);
+      acc[lowercaseStatus].push(task);
     }
     return acc;
   }, {});
@@ -137,6 +165,14 @@ const Kanbanboard = () => {
     delayedTasksRef,
     completedTasksRef,
   ];
+  const allStatuses = ["yettostart", "inprogress", "delayed", "complete"];
+
+  const statusDisplayNames = {
+    yettostart: "Yet to Start",
+    inprogress: "In Progress",
+    delayed: "Delayed",
+    complete: "Complete",
+  };
 
   const OnDivChange = () => {
     elementsToModify.forEach((elementRef) => {
@@ -166,8 +202,8 @@ const Kanbanboard = () => {
         createProject={false}
       />
       <div className="ynex-kanban-board text-defaulttextcolor dark:text-defaulttextcolor/70 text-defaultsize">
-        <div className="kanban-view flex">
-          {Object.entries(groupedTasks).map(([status, tasks]) => (
+          <div className="kanban-view flex">
+          {allStatuses.map((status) => (
             <div
               className={`kanban-column kanban-tasks-type ${statusToClassName[status]}`}
               key={status}
@@ -176,7 +212,7 @@ const Kanbanboard = () => {
               <div className="mb-4">
                 <div className="flex justify-between items-center">
                   <span className="block font-semibold text-[.9375rem]">
-                    {status.toUpperCase()} - {tasks.length}
+                    {statusDisplayNames[status].toUpperCase()}
                   </span>
                 </div>
               </div>
@@ -189,7 +225,7 @@ const Kanbanboard = () => {
                     ref={
                       statusToClassName[status] === "new"
                         ? newTasksRef
-                        : statusToClassName[status] === "in-progress"
+                        : statusToClassName[status] === "inprogress"
                         ? inProgressTasksRef
                         : statusToClassName[status] === "todo"
                         ? delayedTasksRef
@@ -199,11 +235,9 @@ const Kanbanboard = () => {
                     }
                     onMouseEnter={OnDivChange}
                     className="firstdrag"
-                    data-view-btn={`${statusToClassName[
-                      status
-                    ].toLowerCase()}-tasks`}
+                    data-view-btn={`${statusToClassName[status]}-tasks`}
                   >
-                    {tasks.map((task) => (
+                    {(groupedTasks[status] || []).map((task) => (
                       <TaskCard key={task.id} task={task} />
                     ))}
                   </div>
@@ -225,11 +259,8 @@ const TaskCard = ({ task }) => {
       description,
       start_date,
       end_date,
-      task_owner_id,
       budget_estimated,
       actual_spent,
-      percentage_complete,
-      files_urls,
     },
   } = task;
 
@@ -249,12 +280,12 @@ const TaskCard = ({ task }) => {
           </div>
           <div className="flex items-center justify-between">
             <div className="task-badges text-lg">
-              <span className="badge bg-light">{`Estimated - $${parseInt(
-                budget_estimated
-              )?.toLocaleString()}`}</span>
+              <span className="badge bg-light">{`Estimated - $${(
+                parseInt(budget_estimated) || 0
+              ).toLocaleString()}`}</span>
               <br />
               <span className="badge bg-success/10 text-success">
-                {`Spent - $${parseInt(actual_spent)?.toLocaleString()}`}
+                {`Spent - $${(parseInt(actual_spent) || 0).toLocaleString()}`}
               </span>
             </div>
             <div className="hs-dropdown ti-dropdown ltr:[--placement:bottom-right] rtl:[--placement:bottom-left]">
@@ -267,15 +298,7 @@ const TaskCard = ({ task }) => {
                 <i className="fe fe-more-vertical"></i>
               </Link>
               <ul className="hs-dropdown-menu ti-dropdown-menu hidden">
-                <li>
-                  <Link
-                    className="ti-dropdown-item !py-2 !text-[0.8125rem] !font-medium !inline-flex"
-                    href="#!"
-                  >
-                    <i className="ri-delete-bin-line me-1 align-middle"></i>
-                    Delete
-                  </Link>
-                </li>
+                
                 <li>
                   <Link
                     className="ti-dropdown-item !py-2 !text-[0.8125rem] !font-medium !inline-flex"
@@ -296,6 +319,7 @@ const TaskCard = ({ task }) => {
     </div>
   );
 };
+
 Kanbanboard.layout = "Contentlayout";
 
 export default Kanbanboard;
