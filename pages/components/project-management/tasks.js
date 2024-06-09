@@ -118,6 +118,7 @@ const ViewTasks = () => {
   ];
 
   const getProjectDataFromLocalStorage = () => {
+    try{
      if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
@@ -129,19 +130,20 @@ const ViewTasks = () => {
       getTaskDataFromLocalStorage();
     } else {
       setSelectedProject(null);
+    } }
+    finally {
+      setLoading(false);
     }
   };
   const getTaskDataFromLocalStorage = () => {
-    try{if (
+    if (
       localStorage.getItem("projectTasks") !== null &&
       localStorage.getItem("projectTasks") !== "undefined"
     ) {
       const tasks = JSON.parse(localStorage.getItem("projectTasks"));
       setTasks(tasks);
-    }}
-    finally{
-      setLoading(false);
     }
+   
   };
  
 
@@ -186,7 +188,7 @@ const ViewTasks = () => {
         loadProjectData={getProjectDataFromLocalStorage}
         loadingState={setloader}
       />
-      {loading ? <Preloader /> : (selectedProject) ?(
+      {loading ? <Preloader /> : (selectedProject) ? (
       <>
       <div className="box">
         <div className="box-body">
