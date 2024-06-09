@@ -5,6 +5,7 @@ import axios from "axios";
 import Select from "react-select";
 import { z } from "zod";
 import { SingleButtons } from "@/shared/data/ui-elements/dropdownsdata";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 const MultiSelect = dynamic(() => import("react-multi-select-component"), {
@@ -21,6 +22,8 @@ import network from "@/config";
 import { set } from "date-fns";
 
 const CreateUpdateChangeOrder = (props) => {
+  const router = useRouter();
+
   const formType = props.formType;
   const [formData, setFormData] = useState({
     notes: [],
@@ -130,6 +133,10 @@ const CreateUpdateChangeOrder = (props) => {
           if (response.data.status === 200) {
             updateLocalStorage();
             toast.success("Change Order Updated Successfully");
+            setTimeout(() => {
+              router.push("/components/project-management/change-order/");
+            }, 1000);
+
           }
         })
         .catch((error) => {
@@ -169,6 +176,9 @@ const CreateUpdateChangeOrder = (props) => {
           if (response.data.status === 201) {
             updateLocalStorage();
             toast.success("Change Order Created Successfully");
+            setTimeout(() => {
+              router.push("/components/project-management/change-order/");
+            }, 1000);
           }
         })
         .catch((error) => {

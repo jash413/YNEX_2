@@ -13,6 +13,7 @@ import { data } from "@/shared/data/tables/datatabledata";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import format from "date-fns/format";
+import { useRouter } from "next/router";
 import Preloader from "../preloader/preloader";
 import { to } from "react-spring";
 
@@ -37,6 +38,7 @@ const formDataSchema = z.object({
 });
 
 const CreateUpdateTask = (props) => {
+  const router = useRouter();
   const formType = props.formType;
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -202,6 +204,9 @@ const CreateUpdateTask = (props) => {
             if (response.status === 200) {
               updateTasksLocal();
               toast.success("Task updated successfully");
+              setTimeout(() => {
+                router.push("/components/project-management/tasks");
+              }, 1000);
             }
             console.log(response);
           })
@@ -249,6 +254,9 @@ const CreateUpdateTask = (props) => {
               updateTasksLocal();
               setFormData({});
               toast.success("Task created successfully");
+              setTimeout(() => {
+                router.push("/components/project-management/tasks");
+              }, 1000);
             }
             console.log(response);
           })

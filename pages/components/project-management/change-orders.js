@@ -63,6 +63,8 @@ const ChangeOrders = () => {
     {
       Header: "Amount",
       accessor: "attributes.amount",
+      Cell: ({ value }) => `$${parseInt(value).toLocaleString()}`,
+
     },
     {
       Header: "Status",

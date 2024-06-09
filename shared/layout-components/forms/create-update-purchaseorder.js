@@ -12,8 +12,12 @@ import "react-toastify/dist/ReactToastify.css";
 import network from "@/config";
 import { format } from "date-fns";
 import { act } from "react";
+import { useRouter } from 'next/router';
+
 
 const CreateUpdatePurchaseOrder = (props) => {
+    const router = useRouter();
+
   const formType = props.formType;
   const [formData, setFormData] = useState({
     active: true,
@@ -126,6 +130,10 @@ const CreateUpdatePurchaseOrder = (props) => {
           if (response.data.status === 200) {
             updateLocalStorage();
             toast.success("Purchase Order Updated Successfully");
+            setTimeout(() => {
+                router.push('/components/project-management/purchase-orders/');
+              }, 1000);
+
           }
         })
         .catch((error) => {
@@ -165,6 +173,9 @@ const CreateUpdatePurchaseOrder = (props) => {
           if (response.data.status === 201) {
             updateLocalStorage();
             toast.success("Purchase Order Created Successfully");
+            setTimeout(() => {
+                router.push('/components/project-management/purchase-orders/');
+              }, 1000);
           }
         })
         .catch((error) => {
