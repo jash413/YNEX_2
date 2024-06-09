@@ -22,6 +22,7 @@ const fetchProjectData = async (projectId, token) => {
     const [
       tasksResponse,
       changeOrdersResponse,
+      purchaseOrdersResponse,
       progressionNotesResponse,
       userResponse,
       gcBuisnessResponse,
@@ -32,6 +33,10 @@ const fetchProjectData = async (projectId, token) => {
       }),
       axios.get(
         `${network.onlineUrl}api/change_Order?filter[project]=${projectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
+      axios.get(
+        `${network.onlineUrl}api/purchase_Order?filter[project]=${projectId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       ),
       axios.get(
@@ -55,6 +60,11 @@ const fetchProjectData = async (projectId, token) => {
       "projectChangeOrders",
       JSON.stringify(changeOrdersResponse.data.body.data)
     );
+    localStorage.setItem(
+      "projectPurchaseOrders",
+      JSON.stringify(purchaseOrdersResponse.data.body.data)
+    );
+
     localStorage.setItem(
       "projectProgressionNotes",
       JSON.stringify(progressionNotesResponse.data.body.data)

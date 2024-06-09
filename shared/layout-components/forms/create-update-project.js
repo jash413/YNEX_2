@@ -122,6 +122,7 @@ const CreateUpdateProject = (props) => {
               headers: {
                   'Authorization': `Bearer ${token}`
               },
+              redirect: 'manual',
           });
           console.log(response);
             if (response.status === 302) {
