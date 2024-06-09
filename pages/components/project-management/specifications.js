@@ -19,6 +19,8 @@ const Specifications = () => {
       return Object.values(fieldData || {}).some(Boolean);
     } else if (field.inputType === "radio") {
       return !!fieldData;
+    } else if (field.disabled === true) {
+      return true;
     } else {
       return !!fieldData && fieldData.trim() !== "";
     }
@@ -26,9 +28,14 @@ const Specifications = () => {
 
   const isFormComplete = useCallback(
     (form, data) => {
-      const formFields = form.sections.flatMap((section) => section.fields);
+      const formFields = form.attributes.spec_configurations.sections.flatMap(
+        (section) => section.fields
+      );
       return formFields.every((field) =>
-        isFieldComplete(field, data[form.title] || {})
+        isFieldComplete(
+          field,
+          data[form.attributes.spec_configurations.title] || {}
+        )
       );
     },
     [isFieldComplete]
@@ -38,13 +45,14 @@ const Specifications = () => {
     (data, specifications) => {
       const newStatus = {};
       specifications?.forEach((form) => {
-        const formData = data[form.title] || {};
+        const formData = data[form.attributes.spec_configurations.title] || {};
         const isComplete = isFormComplete(form, data);
-        const isPartiallyComplete = form.sections.some((section) =>
-          section.fields.some((field) => isFieldComplete(field, formData))
-        );
+        const isPartiallyComplete =
+          form.attributes.spec_configurations.sections.some((section) =>
+            section.fields.some((field) => isFieldComplete(field, formData))
+          );
 
-        newStatus[form.title] = isComplete
+        newStatus[form.attributes.code] = isComplete
           ? "complete"
           : isPartiallyComplete
           ? "partial"
@@ -54,6 +62,7 @@ const Specifications = () => {
     },
     [isFormComplete, isFieldComplete]
   );
+
   const getProjectDataFromLocalStorage = useCallback(async () => {
     try {
       const selectedProject = localStorage.getItem("selectedProject");
@@ -62,32 +71,43 @@ const Specifications = () => {
         const selectedSpecifications = JSON.parse(
           localStorage.getItem("projectSpecifications")
         );
-  
+
         const savedFormData = localStorage.getItem("formData");
         const parsedFormData = savedFormData ? JSON.parse(savedFormData) : {};
-  
+
         return { parsedProject, selectedSpecifications, parsedFormData };
       } else {
-        return { parsedProject: null, selectedSpecifications: null, parsedFormData: {} };
+        return {
+          parsedProject: null,
+          selectedSpecifications: null,
+          parsedFormData: {},
+        };
       }
     } catch (error) {
       console.error("Error parsing localStorage data:", error);
-      return { parsedProject: null, selectedSpecifications: null, parsedFormData: {} };
+      return {
+        parsedProject: null,
+        selectedSpecifications: null,
+        parsedFormData: {},
+      };
     }
   }, []);
-  
-  const updateStates = useCallback((data) => {
-    const { parsedProject, selectedSpecifications, parsedFormData } = data;
-    setSelectedProject(parsedProject);
-    setSelectedSpecification(selectedSpecifications);
-    setFormData(parsedFormData);
-    updateAllFormsStatus(parsedFormData, selectedSpecifications);
-  }, [updateAllFormsStatus]);
-  
+
+  const updateStates = useCallback(
+    (data) => {
+      const { parsedProject, selectedSpecifications, parsedFormData } = data;
+      setSelectedProject(parsedProject);
+      setSelectedSpecification(selectedSpecifications);
+      setFormData(parsedFormData);
+      updateAllFormsStatus(parsedFormData, selectedSpecifications);
+    },
+    [updateAllFormsStatus]
+  );
+
   const loadProjectData = useCallback(async () => {
     try {
       const data = await getProjectDataFromLocalStorage();
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
       updateStates(data);
     } catch (error) {
       console.error("Error loading project data:", error);
@@ -95,18 +115,34 @@ const Specifications = () => {
       setLoading(false);
     }
   }, [getProjectDataFromLocalStorage, updateStates]);
-  
+
   useEffect(() => {
     loadProjectData();
   }, [loadProjectData]);
 
+  useEffect(() => {
+    if (selectedSpecification && formData) {
+      updateAllFormsStatus(formData, selectedSpecification);
+    }
+  }, [selectedSpecification, formData, updateAllFormsStatus]);
+
   const handleSpecificationClick = (specification) => {
-    setCurrentForm(specification); // Update the current form being edited
+    setCurrentForm(specification?.attributes?.spec_configurations); // Update the current form being edited
     setTempFormData((prev) => ({
       ...prev,
-      [specification.title]: formData[specification.title] || {},
+      [specification.attributes.code]:
+        formData[specification.attributes.spec_configurations.title] || {},
     }));
   };
+
+  useEffect(() => {
+    if (currentForm && formData[currentForm.title]) {
+      setTempFormData((prev) => ({
+        ...prev,
+        [currentForm.title]: formData[currentForm.title],
+      }));
+    }
+  }, [currentForm, formData]);
 
   const handleInputChange = (e, field) => {
     const { value, type, checked, id } = e.target;
@@ -148,17 +184,6 @@ const Specifications = () => {
 
   const generatePDF = () => {
     try {
-      const allFormsFilled = selectedSpecification.every((form) =>
-        isFormComplete(form, formData)
-      );
-
-      if (!allFormsFilled) {
-        alert(
-          "Please fill in all required fields in all forms before generating the PDF."
-        );
-        return;
-      }
-
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -168,7 +193,9 @@ const Specifications = () => {
 
       const getFieldValue = (form, field) => {
         try {
-          return formData[form.title]?.[field.attributeName];
+          return formData[form.attributes.spec_configurations.title]?.[
+            field.attributeName
+          ];
         } catch {
           return field.inputType === "checkbox" ? {} : "";
         }
@@ -230,13 +257,20 @@ const Specifications = () => {
             .setFontSize(14)
             .setFont(undefined, "bold")
             .setTextColor(0)
-            .text(form.title, margin + 5, yPos + 10);
+            .text(
+              form.attributes.spec_configurations.title,
+              margin + 5,
+              yPos + 10
+            );
           yPos += 25;
         } catch (e) {
-          console.error(`Error adding form header: ${form.title}`, e);
+          console.error(
+            `Error adding form header: ${form.attributes.spec_configurations.title}`,
+            e
+          );
         }
 
-        form.sections.forEach((section) => {
+        form.attributes.spec_configurations.sections.forEach((section) => {
           try {
             doc
               .setFontSize(12)
@@ -251,55 +285,64 @@ const Specifications = () => {
           section.fields.forEach((field) => {
             try {
               const value = getFieldValue(form, field);
-              const label = field.label + ":";
-              const labelWidth = doc.getTextWidth(label);
+              const label = field.label ? `${field.label}:` : "";
+              const attributeName = field.attributeName
+                ? `${field.attributeName}:`
+                : "";
+              const labelText = label || attributeName || "";
+              const labelWidth = doc.getTextWidth(labelText);
 
               if (
                 field.inputType === "checkbox" ||
                 field.inputType === "radio"
               ) {
-                drawText(label, margin, yPos + 3);
+                drawText(labelText, margin, yPos + 3);
                 let xPos = margin + labelWidth + 10;
                 yPos = handleOptionField(field, value, xPos, yPos);
                 yPos += lineHeight + 5;
               } else {
-                drawText(label, margin, yPos + lineHeight - 2);
-                const maxLineWidth = pageWidth - margin - labelWidth - 30;
+                if (field.disabled) {
+                  drawText(labelText, margin, yPos + lineHeight - 2);
+                  yPos += lineHeight + 5;
+                } else {
+                  drawText(labelText, margin, yPos + lineHeight - 2);
+                  const maxLineWidth = pageWidth - margin - labelWidth - 30;
 
-                doc
-                  .setDrawColor(0)
-                  .line(
-                    margin + labelWidth + 5,
-                    yPos + lineHeight,
-                    pageWidth - margin - 10,
-                    yPos + lineHeight
-                  );
-
-                const displayValue = value?.toString() || "";
-                drawText(
-                  displayValue,
-                  margin + labelWidth + 10,
-                  yPos + lineHeight - 2,
-                  {
-                    maxWidth: maxLineWidth,
-                  }
-                );
-                yPos += lineHeight + 5;
-
-                const textLines = doc.splitTextToSize(
-                  displayValue,
-                  maxLineWidth
-                );
-                if (textLines.length > 1) {
-                  textLines.slice(1).forEach((line) => {
-                    yPos += lineHeight;
-                    drawText(
-                      line,
-                      margin + labelWidth + 10,
-                      yPos + lineHeight - 2
+                  doc
+                    .setDrawColor(0)
+                    .line(
+                      margin + labelWidth + 5,
+                      yPos + lineHeight,
+                      pageWidth - margin - 10,
+                      yPos + lineHeight
                     );
-                  });
-                  yPos += lineHeight;
+
+                  const displayValue = value?.toString() || "";
+                  drawText(
+                    displayValue,
+                    margin + labelWidth + 10,
+                    yPos + lineHeight - 2,
+                    {
+                      maxWidth: maxLineWidth,
+                    }
+                  );
+                  yPos += lineHeight + 5;
+
+                  const textLines = doc.splitTextToSize(
+                    displayValue,
+                    maxLineWidth
+                  );
+                  if (textLines.length > 1) {
+                    textLines.slice(1).forEach((line) => {
+                      yPos += lineHeight;
+                      drawText(
+                        line,
+                        margin + labelWidth + 10,
+                        yPos + lineHeight - 2
+                      );
+                    });
+                    yPos += lineHeight;
+                  }
                 }
               }
 
@@ -308,7 +351,10 @@ const Specifications = () => {
                 yPos = 15;
               }
             } catch (e) {
-              console.error(`Error adding field: ${field.label}`, e);
+              console.error(
+                `Error adding field: ${field.label || field.attributeName}`,
+                e
+              );
             }
           });
 
@@ -464,9 +510,9 @@ const Specifications = () => {
               >
                 <div
                   className={`mb-4 box border-2 ${
-                    formStatus[specification.title] === "complete"
+                    formStatus[specification.attributes.code] === "complete"
                       ? "border-green"
-                      : formStatus[specification.title] === "partial"
+                      : formStatus[specification.attributes.code] === "partial"
                       ? "border-yellow"
                       : "border-gray"
                   }`}
@@ -474,13 +520,15 @@ const Specifications = () => {
                   <div className="box-body">
                     <div className="card-text">
                       <h4 className="text-lg font-semibold mb-2">
-                        {specification.title}
+                        {specification.attributes.code}
                       </h4>
                       <p className="text-sm">
                         Status:{" "}
-                        {formStatus[specification.title] === "complete"
+                        {formStatus[specification.attributes.code] ===
+                        "complete"
                           ? "✅ Complete"
-                          : formStatus[specification.title] === "partial"
+                          : formStatus[specification.attributes.code] ===
+                            "partial"
                           ? "🔶 In Progress"
                           : "🔲 Not Started"}
                       </p>
