@@ -73,7 +73,7 @@ const ProjectSummary = () => {
         createProject={true}
         loadingState={setloader}
       />
-      {(selectedProject && !loading) ? (
+      {(!loading) ? (
         <>
         <div className="flex">
           <button

@@ -122,8 +122,8 @@ const CreateUpdateProject = (props) => {
               headers: {
                   'Authorization': `Bearer ${token}`
               },
-              redirect: 'manual' // to prevent automatic following of redirects
           });
+          console.log(response);
             if (response.status === 302) {
                 // Follow the redirect
                 const redirectUrl = response.headers.get('Location');
