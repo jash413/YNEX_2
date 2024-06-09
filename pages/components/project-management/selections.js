@@ -1,5 +1,6 @@
 import Pageheader from "@/shared/layout-components/page-header/pageheader";
 import Seo from "@/shared/layout-components/seo/seo";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 import { useEffect, useState, useCallback } from "react";
 import { jsPDF } from "jspdf";
 
@@ -10,21 +11,7 @@ const Selections = () => {
   const [formData, setFormData] = useState({});
   const [formStatus, setFormStatus] = useState({});
   const [tempFormData, setTempFormData] = useState({});
-
-  const getProjectDataFromLocalStorage = useCallback(() => {
-    const selectedProject = localStorage.getItem("selectedProject");
-    if (selectedProject && selectedProject !== "undefined") {
-      setSelectedProject(JSON.parse(selectedProject));
-      const selectedSelections = JSON.parse(
-        localStorage.getItem("projectSelections")
-      );
-      setSelectedSelection(selectedSelections);
-      return selectedSelections;
-    } else {
-      setSelectedSelection(null);
-      return null;
-    }
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   const isFieldComplete = useCallback((field, data) => {
     const fieldData = data[field.attributeName];
@@ -32,6 +19,8 @@ const Selections = () => {
       return Object.values(fieldData || {}).some(Boolean);
     } else if (field.inputType === "radio") {
       return !!fieldData;
+    } else if (field.disabled === true) {
+      return true;
     } else {
       return !!fieldData && fieldData.trim() !== "";
     }
@@ -39,9 +28,14 @@ const Selections = () => {
 
   const isFormComplete = useCallback(
     (form, data) => {
-      const formFields = form.sections.flatMap((section) => section.fields);
+      const formFields = form.attributes.spec_configurations.sections.flatMap(
+        (section) => section.fields
+      );
       return formFields.every((field) =>
-        isFieldComplete(field, data[form.title] || {})
+        isFieldComplete(
+          field,
+          data[form.attributes.spec_configurations.title] || {}
+        )
       );
     },
     [isFieldComplete]
@@ -51,13 +45,14 @@ const Selections = () => {
     (data, Selections) => {
       const newStatus = {};
       Selections?.forEach((form) => {
-        const formData = data[form.title] || {};
+        const formData = data[form.attributes.spec_configurations.title] || {};
         const isComplete = isFormComplete(form, data);
-        const isPartiallyComplete = form.sections.some((section) =>
-          section.fields.some((field) => isFieldComplete(field, formData))
-        );
+        const isPartiallyComplete =
+          form.attributes.spec_configurations.sections.some((section) =>
+            section.fields.some((field) => isFieldComplete(field, formData))
+          );
 
-        newStatus[form.title] = isComplete
+        newStatus[form.attributes.code] = isComplete
           ? "complete"
           : isPartiallyComplete
           ? "partial"
@@ -68,25 +63,86 @@ const Selections = () => {
     [isFormComplete, isFieldComplete]
   );
 
-  useEffect(() => {
-    const Selections = getProjectDataFromLocalStorage();
-    const savedFormData = localStorage.getItem("formData");
-    if (savedFormData) {
-      const parsedFormData = JSON.parse(savedFormData);
-      setFormData(parsedFormData);
-      updateAllFormsStatus(parsedFormData, Selections);
-    } else {
-      updateAllFormsStatus({}, Selections);
+  const getProjectDataFromLocalStorage = useCallback(async () => {
+    try {
+      const selectedProject = localStorage.getItem("selectedProject");
+      if (selectedProject && selectedProject !== "undefined") {
+        const parsedProject = JSON.parse(selectedProject);
+        const selectedSelections = JSON.parse(
+          localStorage.getItem("projectSelections")
+        );
+
+        const savedFormData = localStorage.getItem("formData");
+        const parsedFormData = savedFormData ? JSON.parse(savedFormData) : {};
+
+        return { parsedProject, selectedSelections, parsedFormData };
+      } else {
+        return {
+          parsedProject: null,
+          selectedSelections: null,
+          parsedFormData: {},
+        };
+      }
+    } catch (error) {
+      console.error("Error parsing localStorage data:", error);
+      return {
+        parsedProject: null,
+        selectedSelections: null,
+        parsedFormData: {},
+      };
     }
-  }, [getProjectDataFromLocalStorage, updateAllFormsStatus]);
+  }, []);
+
+  const updateStates = useCallback(
+    (data) => {
+      const { parsedProject, selectedSelections, parsedFormData } = data;
+      setSelectedProject(parsedProject);
+      setSelectedSelection(selectedSelections);
+      setFormData(parsedFormData);
+      updateAllFormsStatus(parsedFormData, selectedSelections);
+    },
+    [updateAllFormsStatus]
+  );
+
+  const loadProjectData = useCallback(async () => {
+    try {
+      const data = await getProjectDataFromLocalStorage();
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
+      updateStates(data);
+    } catch (error) {
+      console.error("Error loading project data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [getProjectDataFromLocalStorage, updateStates]);
+
+  useEffect(() => {
+    loadProjectData();
+  }, [loadProjectData]);
+
+  useEffect(() => {
+    if (selectedSelection && formData) {
+      updateAllFormsStatus(formData, selectedSelection);
+    }
+  }, [selectedSelection, formData, updateAllFormsStatus]);
 
   const handleSelectionClick = (Selection) => {
-    setCurrentForm(Selection); // Update the current form being edited
+    setCurrentForm(Selection?.attributes?.spec_configurations); // Update the current form being edited
     setTempFormData((prev) => ({
       ...prev,
-      [Selection.title]: formData[Selection.title] || {},
+      [Selection.attributes.code]:
+        formData[Selection.attributes.spec_configurations.title] || {},
     }));
   };
+
+  useEffect(() => {
+    if (currentForm && formData[currentForm.title]) {
+      setTempFormData((prev) => ({
+        ...prev,
+        [currentForm.title]: formData[currentForm.title],
+      }));
+    }
+  }, [currentForm, formData]);
 
   const handleInputChange = (e, field) => {
     const { value, type, checked, id } = e.target;
@@ -128,17 +184,6 @@ const Selections = () => {
 
   const generatePDF = () => {
     try {
-      const allFormsFilled = selectedSelection.every((form) =>
-        isFormComplete(form, formData)
-      );
-
-      if (!allFormsFilled) {
-        alert(
-          "Please fill in all required fields in all forms before generating the PDF."
-        );
-        return;
-      }
-
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -148,7 +193,9 @@ const Selections = () => {
 
       const getFieldValue = (form, field) => {
         try {
-          return formData[form.title]?.[field.attributeName];
+          return formData[form.attributes.spec_configurations.title]?.[
+            field.attributeName
+          ];
         } catch {
           return field.inputType === "checkbox" ? {} : "";
         }
@@ -210,13 +257,20 @@ const Selections = () => {
             .setFontSize(14)
             .setFont(undefined, "bold")
             .setTextColor(0)
-            .text(form.title, margin + 5, yPos + 10);
+            .text(
+              form.attributes.spec_configurations.title,
+              margin + 5,
+              yPos + 10
+            );
           yPos += 25;
         } catch (e) {
-          console.error(`Error adding form header: ${form.title}`, e);
+          console.error(
+            `Error adding form header: ${form.attributes.spec_configurations.title}`,
+            e
+          );
         }
 
-        form.sections.forEach((section) => {
+        form.attributes.spec_configurations.sections.forEach((section) => {
           try {
             doc
               .setFontSize(12)
@@ -231,55 +285,64 @@ const Selections = () => {
           section.fields.forEach((field) => {
             try {
               const value = getFieldValue(form, field);
-              const label = field.label + ":";
-              const labelWidth = doc.getTextWidth(label);
+              const label = field.label ? `${field.label}:` : "";
+              const attributeName = field.attributeName
+                ? `${field.attributeName}:`
+                : "";
+              const labelText = label || attributeName || "";
+              const labelWidth = doc.getTextWidth(labelText);
 
               if (
                 field.inputType === "checkbox" ||
                 field.inputType === "radio"
               ) {
-                drawText(label, margin, yPos + 3);
+                drawText(labelText, margin, yPos + 3);
                 let xPos = margin + labelWidth + 10;
                 yPos = handleOptionField(field, value, xPos, yPos);
                 yPos += lineHeight + 5;
               } else {
-                drawText(label, margin, yPos + lineHeight - 2);
-                const maxLineWidth = pageWidth - margin - labelWidth - 30;
+                if (field.disabled) {
+                  drawText(labelText, margin, yPos + lineHeight - 2);
+                  yPos += lineHeight + 5;
+                } else {
+                  drawText(labelText, margin, yPos + lineHeight - 2);
+                  const maxLineWidth = pageWidth - margin - labelWidth - 30;
 
-                doc
-                  .setDrawColor(0)
-                  .line(
-                    margin + labelWidth + 5,
-                    yPos + lineHeight,
-                    pageWidth - margin - 10,
-                    yPos + lineHeight
-                  );
-
-                const displayValue = value?.toString() || "";
-                drawText(
-                  displayValue,
-                  margin + labelWidth + 10,
-                  yPos + lineHeight - 2,
-                  {
-                    maxWidth: maxLineWidth,
-                  }
-                );
-                yPos += lineHeight + 5;
-
-                const textLines = doc.splitTextToSize(
-                  displayValue,
-                  maxLineWidth
-                );
-                if (textLines.length > 1) {
-                  textLines.slice(1).forEach((line) => {
-                    yPos += lineHeight;
-                    drawText(
-                      line,
-                      margin + labelWidth + 10,
-                      yPos + lineHeight - 2
+                  doc
+                    .setDrawColor(0)
+                    .line(
+                      margin + labelWidth + 5,
+                      yPos + lineHeight,
+                      pageWidth - margin - 10,
+                      yPos + lineHeight
                     );
-                  });
-                  yPos += lineHeight;
+
+                  const displayValue = value?.toString() || "";
+                  drawText(
+                    displayValue,
+                    margin + labelWidth + 10,
+                    yPos + lineHeight - 2,
+                    {
+                      maxWidth: maxLineWidth,
+                    }
+                  );
+                  yPos += lineHeight + 5;
+
+                  const textLines = doc.splitTextToSize(
+                    displayValue,
+                    maxLineWidth
+                  );
+                  if (textLines.length > 1) {
+                    textLines.slice(1).forEach((line) => {
+                      yPos += lineHeight;
+                      drawText(
+                        line,
+                        margin + labelWidth + 10,
+                        yPos + lineHeight - 2
+                      );
+                    });
+                    yPos += lineHeight;
+                  }
                 }
               }
 
@@ -288,7 +351,10 @@ const Selections = () => {
                 yPos = 15;
               }
             } catch (e) {
-              console.error(`Error adding field: ${field.label}`, e);
+              console.error(
+                `Error adding field: ${field.label || field.attributeName}`,
+                e
+              );
             }
           });
 
@@ -407,96 +473,107 @@ const Selections = () => {
     );
   };
 
+  const startLoading = () => {
+    setLoading(true);
+  };
+
   return (
     <div>
       <Seo title={"Selections"} />
       <Pageheader
         activepage={`${selectedProject?.attributes?.name || `Selections`}`}
         mainpage="Selections"
-        loadProjectData={getProjectDataFromLocalStorage}
+        loadProjectData={loadProjectData}
         mainpageurl="/components/project-management/project-summary/"
+        loadingState={startLoading}
       />
-      <div className="mt-4">
-        <button
-          type="button"
-          className="ti-btn bg-primary text-white !font-medium"
-          onClick={generatePDF}
-        >
-          Print All Forms as PDF
-        </button>
-      </div>
-      <br />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {selectedSelection?.map((Selection, index) => (
-          <button
-            key={index}
-            onClick={() => handleSelectionClick(Selection)}
-            data-hs-overlay="#add-task"
-          >
-            <div
-              className={`mb-4 box border-2 ${
-                formStatus[Selection.title] === "complete"
-                  ? "border-green"
-                  : formStatus[Selection.title] === "partial"
-                  ? "border-yellow"
-                  : "border-gray"
-              }`}
+      {loading ? (
+        <Preloader />
+      ) : (
+        <>
+          <div className="mt-4">
+            <button
+              type="button"
+              className="ti-btn bg-primary text-white !font-medium"
+              onClick={generatePDF}
             >
-              <div className="box-body">
-                <div className="card-text">
-                  <h4 className="text-lg font-semibold mb-2">
-                    {Selection.title}
-                  </h4>
-                  <p className="text-sm">
-                    Status:{" "}
-                    {formStatus[Selection.title] === "complete"
-                      ? "✅ Complete"
-                      : formStatus[Selection.title] === "partial"
-                      ? "🔶 In Progress"
-                      : "🔲 Not Started"}
-                  </p>
+              Print All Forms as PDF
+            </button>
+          </div>
+          <br />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {selectedSelection?.map((Selection, index) => (
+              <button
+                key={index}
+                onClick={() => handleSelectionClick(Selection)}
+                data-hs-overlay="#add-task"
+              >
+                <div
+                  className={`mb-4 box border-2 ${
+                    formStatus[Selection.attributes.code] === "complete"
+                      ? "border-green"
+                      : formStatus[Selection.attributes.code] === "partial"
+                      ? "border-yellow"
+                      : "border-gray"
+                  }`}
+                >
+                  <div className="box-body">
+                    <div className="card-text">
+                      <h4 className="text-lg font-semibold mb-2">
+                        {Selection.attributes.code}
+                      </h4>
+                      <p className="text-sm">
+                        Status:{" "}
+                        {formStatus[Selection.attributes.code] === "complete"
+                          ? "✅ Complete"
+                          : formStatus[Selection.attributes.code] === "partial"
+                          ? "🔶 In Progress"
+                          : "🔲 Not Started"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div id="add-task" className="hs-overlay hidden ti-modal">
+            <div className="hs-overlay-open:mt-7 ti-modal-box mt-0 ease-out lg:!max-w-4xl lg:w-full m-3 lg:!mx-auto">
+              <div className="ti-modal-content">
+                <div className="ti-modal-header">
+                  <h6 className="modal-title text-[1rem] font-semibold text-default dark:text-defaulttextcolor/70">
+                    Selection Details
+                  </h6>
+                  <button
+                    type="button"
+                    className="hs-dropdown-toggle !text-[1rem] !font-semibold"
+                    data-hs-overlay="#add-task"
+                  >
+                    <span className="sr-only">Close</span>
+                    <i className="ri-close-line"></i>
+                  </button>
+                </div>
+                {renderDynamicForm()}
+                <div className="ti-modal-footer">
+                  <button
+                    type="button"
+                    className="hs-dropdown-toggle ti-btn ti-btn-light align-middle"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ti-btn bg-primary text-white !font-medium"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
             </div>
-          </button>
-        ))}
-      </div>
-      <div id="add-task" className="hs-overlay hidden ti-modal">
-        <div className="hs-overlay-open:mt-7 ti-modal-box mt-0 ease-out lg:!max-w-4xl lg:w-full m-3 lg:!mx-auto">
-          <div className="ti-modal-content">
-            <div className="ti-modal-header">
-              <h6 className="modal-title text-[1rem] font-semibold text-default dark:text-defaulttextcolor/70">
-                Selection Details
-              </h6>
-              <button
-                type="button"
-                className="hs-dropdown-toggle !text-[1rem] !font-semibold"
-                data-hs-overlay="#add-task"
-              >
-                <span className="sr-only">Close</span>
-                <i className="ri-close-line"></i>
-              </button>
-            </div>
-            {renderDynamicForm()}
-            <div className="ti-modal-footer">
-              <button
-                type="button"
-                className="hs-dropdown-toggle ti-btn ti-btn-light align-middle"
-                onClick={handleCancel}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="ti-btn bg-primary text-white !font-medium"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };
