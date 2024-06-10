@@ -41,6 +41,7 @@ const Kanbanboard = () => {
   const [tasks, setTasks] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const newTasksRef = useRef(null);
   const inProgressTasksRef = useRef(null);
