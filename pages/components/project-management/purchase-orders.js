@@ -8,6 +8,11 @@ import Link from "next/link";
 import Preloader from "@/shared/layout-components/preloader/preloader";
 import { format } from "date-fns";
 import { Cell } from "gridjs";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import network from "@/config";
+
 
 const CountUp = dynamic(() => import("react-countup"), { ssr: false });
 
@@ -21,9 +26,37 @@ const PurchaseOrders = () => {
   const [loading, setLoading] = useState(false);
   const [gcBuisness, setGcBuisness] = useState([]);
   const [Users, setUsers] = useState(null);
+  const [token, setToken] = useState(null);
 
   const loadingState = () => {
     setLoading(true);
+  };
+
+  const handleDelete = (id) => {
+    return () => {
+      axios
+        .delete(`${network.onlineUrl}api/purchase_Order/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          if (response.data.status === 204) {
+            toast.success("Purchase Order deleted successfully");
+            const newPurchaseOrders = purchaseOrders.filter(
+              (purchaseOrder) => purchaseOrder.id !== id
+            );
+            setPurchaseOrders(newPurchaseOrders);
+            localStorage.setItem(
+              "projectPurchaseOrders",
+              JSON.stringify(newPurchaseOrders)
+            );
+          }
+        })
+        .catch((error) => {
+          toast.error("Error deleting Purchase Order");
+        });
+    };
   };
 
   const COLUMNS = [
@@ -37,9 +70,9 @@ const PurchaseOrders = () => {
           >
             <i className="ri-pencil-fill"></i>
           </Link>
-          {/* <Link href={`/components/project-management/delete-task/${original.task_code_id}`}>
-              <i className="ri-delete-bin-6-fill"></i>
-          </Link> */}
+          <Link onClick={handleDelete(original.id)} href="javascript:void(0)">
+            <i className="ri-delete-bin-6-fill"></i>
+          </Link>
         </div>
       ),
     },
@@ -62,8 +95,8 @@ const PurchaseOrders = () => {
       Header: "User",
       accessor: "attributes.user_id",
       Cell: ({ value }) => {
-        const user = Users.find(user => user.id == value);
-        return user ? user.attributes.username : '';
+        const user = Users.find((user) => user.id == value);
+        return user ? user.attributes.username : "";
       },
     },
     {
@@ -122,6 +155,7 @@ const PurchaseOrders = () => {
           localStorage.getItem("selectedProject")
         );
         setSelectedProject(selectedProject);
+        setToken(localStorage.getItem("token"));
         setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
         setUsers(JSON.parse(localStorage.getItem("Users")));
         getPurchaseOrders();
@@ -160,9 +194,10 @@ const PurchaseOrders = () => {
         loadProjectData={getProjectDataFromLocalStorage}
         loadingState={loadingState}
       />
+      <ToastContainer />
       {loading ? (
         <Preloader />
-      ) : ( selectedProject && purchaseOrders && gcBuisness && Users) ? (
+      ) : selectedProject && purchaseOrders && gcBuisness && Users ? (
         <>
           <div className="box">
             <div className="box-body">
@@ -247,18 +282,17 @@ const PurchaseOrders = () => {
                 <div className="box-header">
                   <h5 className="box-title">PurchaseOrders Table</h5>
                   <div className="display-flex justify-content-end">
-              <button
-                  type="button"
-                  className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !text-[0.75rem]"
-                  data-hs-overlay="#create-purchaseorder"
-                >
-                  <Link href="/components/project-management/create-purchaseorder/">
-                    <i className="ri-add-line font-semibold align-middle"></i>{" "}
-                    Create Purchase Order
-                  </Link>
-                </button>
-                
-                </div>
+                    <button
+                      type="button"
+                      className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !text-[0.75rem]"
+                      data-hs-overlay="#create-purchaseorder"
+                    >
+                      <Link href="/components/project-management/create-purchaseorder/">
+                        <i className="ri-add-line font-semibold align-middle"></i>{" "}
+                        Create Purchase Order
+                      </Link>
+                    </button>
+                  </div>
                 </div>
                 <div className="box-body space-y-3">
                   <div className="overflow-hidden">
@@ -277,16 +311,15 @@ const PurchaseOrders = () => {
             </div>
           </div>
         </>
-      ) : (  <div className="box">
-        <div className="box-body">
-          <div className="flex items-center justify-center">
-            <h1 className="text-center">No project selected</h1>
+      ) : (
+        <div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+              <h1 className="text-center">No project selected</h1>
+            </div>
           </div>
         </div>
-      </div>
-      )
-      }
-      
+      )}
     </div>
   );
 };
