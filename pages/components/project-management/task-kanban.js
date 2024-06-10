@@ -205,7 +205,7 @@ const Kanbanboard = () => {
         loadProjectData={getDataFromLocalStorage}
         createProject={false}
       />
-      (loading) ? <Preloader /> : (selectedProject) ? (
+      {loading ? <Preloader /> : (selectedProject) ? (
       <div className="ynex-kanban-board text-defaulttextcolor dark:text-defaulttextcolor/70 text-defaultsize">
           <div className="kanban-view flex">
           {allStatuses.map((status) => (
@@ -259,6 +259,7 @@ const Kanbanboard = () => {
             </div>
           </div>
         </div>)
+}
     </div>
   );
 };
