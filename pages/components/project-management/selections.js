@@ -489,7 +489,7 @@ const Selections = () => {
       />
       {loading ? (
         <Preloader />
-      ) : (
+      ) : selectedProject ? (
         <>
           {selectedSelection && selectedSelection.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -588,6 +588,14 @@ const Selections = () => {
             </div>
           </div>
         </>
+      ) : (
+        <div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+              <h1 className="text-center">No project selected</h1>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
