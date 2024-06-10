@@ -47,6 +47,9 @@ const Kanbanboard = () => {
   const inProgressTasksRef = useRef(null);
   const delayedTasksRef = useRef(null);
   const completedTasksRef = useRef(null);
+  const setloader = () => {
+    setLoading(true);
+  }
 
   const updateTasksLocal = () => {
     if (selectedProject) {
@@ -140,9 +143,20 @@ const Kanbanboard = () => {
   }, [token]);
 
   const getDataFromLocalStorage = () => {
-    const selectedProject = localStorage.getItem("selectedProject");
-    if (selectedProject) {
-      setSelectedProject(JSON.parse(selectedProject));
+    try{
+     if (
+      localStorage.getItem("selectedProject") !== null &&
+      localStorage.getItem("selectedProject") !== "undefined"
+    ) {
+      const selectedProject = JSON.parse(
+        localStorage.getItem("selectedProject")
+      );
+      setSelectedProject(selectedProject);
+    } else {
+      setSelectedProject(null);
+    } }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -205,6 +219,7 @@ const Kanbanboard = () => {
         mainpageurl="/components/project-management/tasks/"
         loadProjectData={getDataFromLocalStorage}
         createProject={false}
+        loadingState={setloader}
       />
       {loading ? <Preloader /> : (selectedProject) ? (
       <div className="ynex-kanban-board text-defaulttextcolor dark:text-defaulttextcolor/70 text-defaultsize">
