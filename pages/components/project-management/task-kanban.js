@@ -10,6 +10,7 @@ import DatePicker from "react-datepicker";
 import { format, differenceInDays } from "date-fns";
 import Preloader from "@/shared/layout-components/preloader/preloader";
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 
 import { FilePond, registerPlugin } from "react-filepond";
