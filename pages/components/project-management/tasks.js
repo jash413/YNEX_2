@@ -102,6 +102,12 @@ const ViewTasks = () => {
     {
       Header: "Task Name",
       accessor: "attributes.task_name",
+      Cell : ({row : {original}}) => (
+        <Link href={`/components/project-management/task-details/${original.id}`}>
+          {original.attributes.task_name}
+        </Link>
+
+      )
     },
     {
       Header: "Description",
