@@ -14,6 +14,20 @@ import axios from "axios";
 import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const TaskDetails = ({ taskId }) => {
+    const [taskData, setTaskData] = useState([]);
+    useEffect(() => {
+        axios
+            .get(`${network.onlineUrl}api/task/${taskId}`)
+            .then((response) => {
+                if(response.data.status === 200){
+                    setTaskData(response.data.body.data);
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
+    , [taskId]);
 return(
     <div>
         hello

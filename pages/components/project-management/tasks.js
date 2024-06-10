@@ -55,8 +55,8 @@ const ViewTasks = () => {
       getProjectDataFromLocalStorage();
       getTaskDataFromLocalStorage();
       setToken(localStorage.getItem("token"));
-      if(tasks){
       const tasksArray = JSON.parse(localStorage.getItem("projectTasks"));
+      if(tasksArray){
       const completed = tasksArray.filter(
         (task) => task.attributes.status === "Complete"
       );
