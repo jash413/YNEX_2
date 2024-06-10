@@ -491,15 +491,30 @@ const Selections = () => {
         <Preloader />
       ) : (
         <>
-          <div className="mt-4">
-            <button
-              type="button"
-              className="ti-btn bg-primary text-white !font-medium"
-              onClick={generatePDF}
-            >
-              Print All Forms as PDF
-            </button>
-          </div>
+          {selectedSelection && selectedSelection.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="mb-4">
+                <button
+                  type="button"
+                  className="ti-btn bg-primary text-white !font-medium"
+                  onClick={generatePDF}
+                >
+                  Download All Forms as PDF
+                </button>
+              </div>
+              <div className="mb-4">
+                <button
+                  type="button"
+                  className="ti-btn bg-primary text-white !font-medium"
+                  onClick={() => {
+                    console.log(formData);
+                  }}
+                >
+                  Upload Selections
+                </button>
+              </div>
+            </div>
+          )}
           <br />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {selectedSelection?.map((Selection, index) => (
