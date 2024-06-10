@@ -36,8 +36,6 @@ const formDataSchema = z.object({
   files: z.array(z.string()),
 });
 
-
-
 const CreateUpdateProject = (props) => {
   const router = useRouter();
   const formType = props.formType;
@@ -64,11 +62,63 @@ const CreateUpdateProject = (props) => {
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const states = {
+    AL: "Alabama",
+    AK: "Alaska",
+    AZ: "Arizona",
+    AR: "Arkansas",
+    CA: "California",
+    CO: "Colorado",
+    CT: "Connecticut",
+    DE: "Delaware",
+    FL: "Florida",
+    GA: "Georgia",
+    HI: "Hawaii",
+    ID: "Idaho",
+    IL: "Illinois",
+    IN: "Indiana",
+    IA: "Iowa",
+    KS: "Kansas",
+    KY: "Kentucky",
+    LA: "Louisiana",
+    ME: "Maine",
+    MD: "Maryland",
+    MA: "Massachusetts",
+    MI: "Michigan",
+    MN: "Minnesota",
+    MS: "Mississippi",
+    MO: "Missouri",
+    MT: "Montana",
+    NE: "Nebraska",
+    NV: "Nevada",
+    NH: "New Hampshire",
+    NJ: "New Jersey",
+    NM: "New Mexico",
+    NY: "New York",
+    NC: "North Carolina",
+    ND: "North Dakota",
+    OH: "Ohio",
+    OK: "Oklahoma",
+    OR: "Oregon",
+    PA: "Pennsylvania",
+    RI: "Rhode Island",
+    SC: "South Carolina",
+    SD: "South Dakota",
+    TN: "Tennessee",
+    TX: "Texas",
+    UT: "Utah",
+    VT: "Vermont",
+    VA: "Virginia",
+    WA: "Washington",
+    WV: "West Virginia",
+    WI: "Wisconsin",
+    WY: "Wyoming",
+  };
 
   const loadingState = () => {
     setLoading(true);
   };
-  
+
   useEffect(() => {
     if (window !== undefined) {
       setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
@@ -119,28 +169,31 @@ const CreateUpdateProject = (props) => {
 
   async function fetchAndSetFiles(fileNames, setFiles) {
     const files = await Promise.all(
-        fileNames.map(async (fileName) => {
-            let response = await fetch(`${network.onlineUrl}api/download_file/?filename=${fileName}`, {
-              headers: {
-                  'Authorization': `Bearer ${token}`
-              },
-              redirect: 'manual',
-          });
-          console.log(response);
-            if (response.status === 302) {
-                // Follow the redirect
-                const redirectUrl = response.headers.get('Location');
-                response = await fetch(redirectUrl);
-            }
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.blob();
-        })
+      fileNames.map(async (fileName) => {
+        let response = await fetch(
+          `${network.onlineUrl}api/download_file/?filename=${fileName}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            redirect: "manual",
+          }
+        );
+        console.log(response);
+        if (response.status === 302) {
+          // Follow the redirect
+          const redirectUrl = response.headers.get("Location");
+          response = await fetch(redirectUrl);
+        }
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.blob();
+      })
     );
     setFiles(files.map((file) => ({ source: file })));
-}
- 
+  }
+
   useEffect(() => {
     getDataFromLocalStorage();
     if (window !== undefined) {
@@ -155,8 +208,12 @@ const CreateUpdateProject = (props) => {
         })
         .then((response) => {
           const project = response.data.body.data;
-          fetchAndSetFiles(project.attributes.document_urls, setFiles)
-    .catch(e => console.log('There was a problem with the fetch operation: ' + e.message));
+          fetchAndSetFiles(project.attributes.document_urls, setFiles).catch(
+            (e) =>
+              console.log(
+                "There was a problem with the fetch operation: " + e.message
+              )
+          );
           setFormData({
             selectedProject: project.id,
             description: project.attributes.description,
@@ -238,40 +295,37 @@ const CreateUpdateProject = (props) => {
           }
         )
         .then((response) => {
-          if(response.data.status == 200){
-          setFormData({
-            name: "",
-            description: "",
-            address1: "",
-            address2: "",
-            zipcode: "", // zipcode
-            state: "", // State
-            budget: "", // Price for customer/Budget
-            exception_notes: "",
-            start_date: "", // Start date
-            end_date: "", // End date
-            files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
-          });
-          toast.success('Project Updated Successfully', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
+          if (response.data.status == 200) {
+            setFormData({
+              name: "",
+              description: "",
+              address1: "",
+              address2: "",
+              zipcode: "", // zipcode
+              state: "", // State
+              budget: "", // Price for customer/Budget
+              exception_notes: "",
+              start_date: "", // Start date
+              end_date: "", // End date
+              files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
+            });
+            toast.success("Project Updated Successfully", {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "light",
             });
             setTimeout(() => {
               router.push("/components/project-management/project-summary/");
             }, 1000);
-
-
           }
-
         })
         .catch((error) => {
-          toast.error('Error in updating project', {
+          toast.error("Error in updating project", {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
@@ -280,7 +334,7 @@ const CreateUpdateProject = (props) => {
             draggable: true,
             progress: undefined,
             theme: "light",
-            });
+          });
         });
     }
 
@@ -330,7 +384,7 @@ const CreateUpdateProject = (props) => {
             end_date: "", // End date
             files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
           });
-          toast.success('Project Created Successfully', {
+          toast.success("Project Created Successfully", {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
@@ -339,13 +393,13 @@ const CreateUpdateProject = (props) => {
             draggable: true,
             progress: undefined,
             theme: "light",
-            });
-            setTimeout(() => {
-              router.push("/components/project-management/project-summary/");
-            }, 1000);
+          });
+          setTimeout(() => {
+            router.push("/components/project-management/project-summary/");
+          }, 1000);
         })
         .catch((error) => {
-          toast.error('Error in creating project', {
+          toast.error("Error in creating project", {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
@@ -354,8 +408,7 @@ const CreateUpdateProject = (props) => {
             draggable: true,
             progress: undefined,
             theme: "light",
-            });
-
+          });
         });
     }
   };
@@ -532,18 +585,34 @@ const CreateUpdateProject = (props) => {
                       <label htmlFor="state" className="form-label">
                         State :
                       </label>
-                      <input
+                     <Select
                         required
-                        type="text"
-                        className="form-control"
-                        id="state"
-                        placeholder="Enter State"
-                        value={formData.state}
-                        onChange={handleInputChange}
+                        name="state"
+                        options={Object.entries(states).map(([key, value]) => ({
+                          value: key,
+                          label: value,
+                        }))}
+                        className="js-example-basic-single w-full"
+                        isSearchable
+                        menuPlacement="auto"
+                        classNamePrefix="Select2"
+                        defaultValue={[
+                          {
+                            value: formData.state,
+                            label: states[formData.state],
+                          },
+                        ]}
+                        value={{
+                          value: formData.state,
+                          label: states[formData.state],
+                        }
+                        }
+                        onChange={(option) => {
+                          setFormData({ ...formData, state: option.value });
+                        }}
                       />
                     </div>
 
-                  
                     <div className="xl:col-span-12 col-span-12 mb-4">
                       <label htmlFor="description" className="form-label">
                         Project Description :
@@ -598,7 +667,7 @@ const CreateUpdateProject = (props) => {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Add other input fields here */}
                     <div className="xl:col-span-12 col-span-12">
                       <label htmlFor="text-area" className="form-label">
