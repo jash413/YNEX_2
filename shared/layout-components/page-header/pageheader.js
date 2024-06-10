@@ -68,6 +68,18 @@ const Pageheader = ({
         "selectedProject",
         JSON.stringify(newSelectedProject)
       );
+      if (!newSelectedProject) {
+        localStorage.removeItem("projectTasks");
+        localStorage.removeItem("projectChangeOrders");
+        localStorage.removeItem("projectPurchaseOrders");
+        localStorage.removeItem("projectProgressionNotes");
+        localStorage.removeItem("Users");
+        localStorage.removeItem("gcBuisness");
+        localStorage.removeItem("projectSpecifications");
+        localStorage.removeItem("projectSelections");
+        loadProjectData();
+        return;
+      }
 
       if (newSelectedProject) {
         const projectId = newSelectedProject.id;
