@@ -8,6 +8,10 @@ import axios from "axios";
 const Select = dynamic(() => import("react-select"), { ssr: false });
 import DatePicker from "react-datepicker";
 import { format, differenceInDays } from "date-fns";
+import Preloader from "@/shared/layout-components/preloader/preloader";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 import { FilePond, registerPlugin } from "react-filepond";
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
@@ -38,11 +42,15 @@ const Kanbanboard = () => {
   const [tasks, setTasks] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const newTasksRef = useRef(null);
   const inProgressTasksRef = useRef(null);
   const delayedTasksRef = useRef(null);
   const completedTasksRef = useRef(null);
+  const setloader = () => {
+    setLoading(true);
+  }
 
   const updateTasksLocal = () => {
     if (selectedProject) {
@@ -120,6 +128,7 @@ const Kanbanboard = () => {
               .then((response) => {
                 if (response.data.status === 200) {
                   updateTasksLocal();
+                  toast.success("Task status updated successfully");
                 }
               })
               .catch((error) => {
@@ -135,9 +144,20 @@ const Kanbanboard = () => {
   }, [token]);
 
   const getDataFromLocalStorage = () => {
-    const selectedProject = localStorage.getItem("selectedProject");
-    if (selectedProject) {
-      setSelectedProject(JSON.parse(selectedProject));
+    try{
+     if (
+      localStorage.getItem("selectedProject") !== null &&
+      localStorage.getItem("selectedProject") !== "undefined"
+    ) {
+      const selectedProject = JSON.parse(
+        localStorage.getItem("selectedProject")
+      );
+      setSelectedProject(selectedProject);
+    } else {
+      setSelectedProject(null);
+    } }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -200,7 +220,10 @@ const Kanbanboard = () => {
         mainpageurl="/components/project-management/tasks/"
         loadProjectData={getDataFromLocalStorage}
         createProject={false}
+        loadingState={setloader}
       />
+      <ToastContainer />
+      {loading ? <Preloader /> : (selectedProject) ? (
       <div className="ynex-kanban-board text-defaulttextcolor dark:text-defaulttextcolor/70 text-defaultsize">
           <div className="kanban-view flex">
           {allStatuses.map((status) => (
@@ -246,7 +269,15 @@ const Kanbanboard = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div>) : (
+        <div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+            <h1 className="text-center">No project selected</h1>
+            </div>
+          </div>
+        </div>)
+}
     </div>
   );
 };

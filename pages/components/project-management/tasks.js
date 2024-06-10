@@ -25,9 +25,10 @@ const ViewTasks = () => {
   const [gcBuisness, setGcBuisness] = useState([]);
 
   useEffect(() => {
+    
+  if(window !== undefined) {
     getProjectDataFromLocalStorage();
     getTaskDataFromLocalStorage();
-  if(window !== undefined) {
     const tasksArray = JSON.parse(localStorage.getItem("projectTasks"));
     const completed = tasksArray.filter((task) => task.attributes.status === "Complete");
     const inProgress = tasksArray.filter((task) => task.attributes.status === "In progress");
@@ -117,6 +118,7 @@ const ViewTasks = () => {
   ];
 
   const getProjectDataFromLocalStorage = () => {
+    try{
      if (
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
@@ -128,19 +130,20 @@ const ViewTasks = () => {
       getTaskDataFromLocalStorage();
     } else {
       setSelectedProject(null);
+    } }
+    finally {
+      setLoading(false);
     }
   };
   const getTaskDataFromLocalStorage = () => {
-    try{if (
+    if (
       localStorage.getItem("projectTasks") !== null &&
       localStorage.getItem("projectTasks") !== "undefined"
     ) {
       const tasks = JSON.parse(localStorage.getItem("projectTasks"));
       setTasks(tasks);
-    }}
-    finally{
-      setLoading(false);
     }
+   
   };
  
 
@@ -185,7 +188,7 @@ const ViewTasks = () => {
         loadProjectData={getProjectDataFromLocalStorage}
         loadingState={setloader}
       />
-      {loading ? <Preloader /> :
+      {loading ? <Preloader /> : (selectedProject) ? (
       <>
       <div className="box">
         <div className="box-body">
@@ -300,6 +303,15 @@ const ViewTasks = () => {
         </div>
       </div>
       </>
+      ) : (
+        <div className="box">
+          <div className="box-body">
+            <div className="flex items-center justify-center">
+            <h1 className="text-center">No project selected</h1>
+            </div>
+          </div>
+        </div>
+      )
 }
     </div>
   );

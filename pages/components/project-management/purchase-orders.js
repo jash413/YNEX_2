@@ -162,7 +162,7 @@ const PurchaseOrders = () => {
       />
       {loading ? (
         <Preloader />
-      ) : (
+      ) : ( selectedProject && purchaseOrders && gcBuisness && Users) ? (
         <>
           <div className="box">
             <div className="box-body">
@@ -277,7 +277,16 @@ const PurchaseOrders = () => {
             </div>
           </div>
         </>
-      )}
+      ) : (  <div className="box">
+        <div className="box-body">
+          <div className="flex items-center justify-center">
+            <h1 className="text-center">No project selected</h1>
+          </div>
+        </div>
+      </div>
+      )
+      }
+      
     </div>
   );
 };

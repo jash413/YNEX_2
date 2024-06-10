@@ -179,7 +179,7 @@ const ProgressionNotes = () => {
         createProject={true}
         loadingState={loadingState}
       />
-      {loading ? <Preloader/> : (<div className="main-chart-wrapper p-2 gap-2 lg:flex">
+      {loading ? <Preloader/> : (selectedProject) ? (<><div className="main-chart-wrapper p-2 gap-2 lg:flex">
         <div className="main-chat-area border dark:border-defaultborder/10">
           <div className="sm:flex items-center p-2 border-b dark:border-defaultborder/10">
             <div className="flex items-center leading-none">
@@ -318,7 +318,16 @@ const ProgressionNotes = () => {
             </div>
           </form>
         </div>
-      </div>)}
+      </div>
+      </>)
+      : (<div className="box">
+        <div className="box-body">
+          <div className="flex items-center justify-center">
+          <h1 className="text-center">No project selected</h1>
+          </div>
+        </div>
+      </div>)
+      }
     </div>
   );
 };
