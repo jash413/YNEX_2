@@ -162,6 +162,10 @@ const CreateUpdateTask = (props) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    toast.info("Please wait while we are processing your request", {
+      toastId: "loading",
+      autoClose: false,
+    });
 
     try {
       // formDataSchema.parse(formData);
@@ -203,6 +207,7 @@ const CreateUpdateTask = (props) => {
           .then((response) => {
             if (response.status === 200) {
               updateTasksLocal();
+              toast.dismiss("loading");
               toast.success("Task updated successfully");
               setTimeout(() => {
                 router.push("/components/project-management/tasks");
@@ -211,6 +216,7 @@ const CreateUpdateTask = (props) => {
             console.log(response);
           })
           .catch((error) => {
+            toast.dismiss("loading");
             toast.error("Error updating task");
           });
       } else {
@@ -252,6 +258,7 @@ const CreateUpdateTask = (props) => {
           .then((response) => {
             if (response.data.status === 201) {
               updateTasksLocal();
+              toast.dismiss("loading");
               setFormData({});
               toast.success("Task created successfully");
               setTimeout(() => {
@@ -261,6 +268,7 @@ const CreateUpdateTask = (props) => {
             console.log(response);
           })
           .catch((error) => {
+            toast.dismiss("loading");
             toast.error("Error creating task");
           });
       }

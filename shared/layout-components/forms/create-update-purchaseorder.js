@@ -13,6 +13,7 @@ import network from "@/config";
 import { format } from "date-fns";
 import { act } from "react";
 import { useRouter } from 'next/router';
+import { to } from "react-spring";
 
 
 const CreateUpdatePurchaseOrder = (props) => {
@@ -96,6 +97,10 @@ const CreateUpdatePurchaseOrder = (props) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    toast.info("Please wait while we are processing your request", {
+      toastId: "loading",
+      autoClose: false,
+    });
     if (formType === "update") {
       axios
         .patch(
@@ -129,6 +134,7 @@ const CreateUpdatePurchaseOrder = (props) => {
           console.log(response);
           if (response.data.status === 200) {
             updateLocalStorage();
+            toast.dismiss("loading");
             toast.success("Purchase Order Updated Successfully");
             setTimeout(() => {
                 router.push('/components/project-management/purchase-orders/');
@@ -137,6 +143,7 @@ const CreateUpdatePurchaseOrder = (props) => {
           }
         })
         .catch((error) => {
+          toast.dismiss("loading");
           toast.error("Error Updating Purchase Order");
         });
     } else {
@@ -172,6 +179,7 @@ const CreateUpdatePurchaseOrder = (props) => {
           console.log(response);
           if (response.data.status === 201) {
             updateLocalStorage();
+            toast.dismiss("loading");
             toast.success("Purchase Order Created Successfully");
             setTimeout(() => {
                 router.push('/components/project-management/purchase-orders/');
@@ -179,6 +187,7 @@ const CreateUpdatePurchaseOrder = (props) => {
           }
         })
         .catch((error) => {
+          toast.dismiss("loading");
           toast.error("Error Creating Purchase Order");
         });
     }

@@ -21,6 +21,7 @@ import network from "@/config";
 import Preloader from "../preloader/preloader";
 import { set } from "date-fns";
 import { h } from "gridjs";
+import { to } from "react-spring";
 
 const formDataSchema = z.object({
   selectedProject: z.string(),
@@ -262,6 +263,10 @@ const CreateUpdateProject = (props) => {
   const handleSubmit = (event) => {
     event.preventDefault();
     const userid = localStorage.getItem("userid");
+    toast.info("Please wait while we are processing your request", {
+      toastId: "loading",
+      autoClose: false,
+    });
 
     if (props.formType === "update") {
       axios
@@ -309,6 +314,7 @@ const CreateUpdateProject = (props) => {
               end_date: "", // End date
               files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
             });
+            toast.dismiss("loading");
             toast.success("Project Updated Successfully", {
               position: "top-right",
               autoClose: 5000,
@@ -325,6 +331,7 @@ const CreateUpdateProject = (props) => {
           }
         })
         .catch((error) => {
+          toast.dismiss("loading");
           toast.error("Error in updating project", {
             position: "top-right",
             autoClose: 5000,
@@ -384,6 +391,7 @@ const CreateUpdateProject = (props) => {
             end_date: "", // End date
             files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
           });
+          toast.dismiss("loading");
           toast.success("Project Created Successfully", {
             position: "top-right",
             autoClose: 5000,
@@ -399,6 +407,7 @@ const CreateUpdateProject = (props) => {
           }, 1000);
         })
         .catch((error) => {
+          toast.dismiss("loading");
           toast.error("Error in creating project", {
             position: "top-right",
             autoClose: 5000,
