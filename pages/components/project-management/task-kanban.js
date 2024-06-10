@@ -221,6 +221,7 @@ const Kanbanboard = () => {
         createProject={false}
         loadingState={setloader}
       />
+      <ToastContainer />
       {loading ? <Preloader /> : (selectedProject) ? (
       <div className="ynex-kanban-board text-defaulttextcolor dark:text-defaulttextcolor/70 text-defaultsize">
           <div className="kanban-view flex">
