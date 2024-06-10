@@ -55,6 +55,7 @@ const ViewTasks = () => {
       getProjectDataFromLocalStorage();
       getTaskDataFromLocalStorage();
       setToken(localStorage.getItem("token"));
+      if(tasks){
       const tasksArray = JSON.parse(localStorage.getItem("projectTasks"));
       const completed = tasksArray.filter(
         (task) => task.attributes.status === "Complete"
@@ -68,6 +69,7 @@ const ViewTasks = () => {
       setCompletedTasks(completed.length);
       setInProgressTasks(inProgress.length);
       setPendingTasks(pending.length);
+    }
       setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
     }
   }, []);

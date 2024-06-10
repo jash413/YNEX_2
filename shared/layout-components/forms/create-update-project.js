@@ -54,6 +54,10 @@ const CreateUpdateProject = (props) => {
     businessId: "",
     name: "",
     files: [],
+    lot_size_in_acres: "",
+    square_footage: "",
+    number_of_beds: "",
+    number_of_baths: "",
   });
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectTemplate, setSelectTemplate] = useState("");
@@ -234,6 +238,11 @@ const CreateUpdateProject = (props) => {
             files: project.attributes.document_urls,
             name: project.attributes.name,
             businessId: project.attributes.gc_business_id,
+            lot_size_in_acres: project.attributes.lot_size_in_acres,
+            square_footage: project.attributes.square_footage,
+            number_of_beds: project.attributes.number_of_beds,
+            number_of_baths: project.attributes.number_of_baths,
+
           });
         })
         .catch((error) => {
@@ -274,7 +283,7 @@ const CreateUpdateProject = (props) => {
           `${network.onlineUrl}api/project/${selectedProject.id}`,
           {
             data: {
-              type: "string",
+              type: "project",
               attributes: {
                 name: formData.name,
                 description: formData.description,
@@ -290,6 +299,10 @@ const CreateUpdateProject = (props) => {
                 start_date: formData.start_date,
                 end_date: formData.end_date,
                 document_urls: formData.files,
+                lot_size_in_acres: Number(formData.lot_size_in_acres),
+                square_footage: Number(formData.square_footage),
+                number_of_beds: Number(formData.number_of_beds),
+                number_of_baths: Number(formData.number_of_baths),
               },
             },
           },
@@ -299,7 +312,7 @@ const CreateUpdateProject = (props) => {
             },
           }
         )
-        .then((response) => {
+        .then( async (response) => {
           if (response.data.status == 200) {
             setFormData({
               name: "",
@@ -310,11 +323,24 @@ const CreateUpdateProject = (props) => {
               state: "", // State
               budget: "", // Price for customer/Budget
               exception_notes: "",
+              lot_size_in_acres: "",
+              square_footage: "",
+              number_of_beds: "",
+              number_of_baths: "",
               start_date: "", // Start date
               end_date: "", // End date
               files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
             });
             toast.dismiss("loading");
+            await axios.get(`${network.onlineUrl}api/project/${selectedProject.id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .then((response) => {
+              const project = response.data.body.data;
+              localStorage.setItem("selectedProject", JSON.stringify(project));
+            })
             toast.success("Project Updated Successfully", {
               position: "top-right",
               autoClose: 5000,
@@ -325,6 +351,7 @@ const CreateUpdateProject = (props) => {
               progress: undefined,
               theme: "light",
             });
+            
             setTimeout(() => {
               router.push("/components/project-management/project-summary/");
             }, 1000);
@@ -351,7 +378,7 @@ const CreateUpdateProject = (props) => {
           `${network.onlineUrl}api/project`,
           {
             data: {
-              type: "string",
+              type: "project",
               attributes: {
                 name: formData.name,
                 description: formData.description,
@@ -367,6 +394,11 @@ const CreateUpdateProject = (props) => {
                 start_date: formData.start_date,
                 end_date: formData.end_date,
                 document_urls: formData.files,
+                lot_size_in_acres: Number(formData.lot_size_in_acres),
+                square_footage: Number(formData.square_footage),
+                number_of_beds: Number(formData.number_of_beds),
+                number_of_baths: Number(formData.number_of_baths),
+
               },
             },
           },
@@ -382,6 +414,10 @@ const CreateUpdateProject = (props) => {
             name: "",
             description: "",
             address1: "",
+            land_size_in_acres: "",
+            square_footage: "",
+            number_of_beds: "",
+            number_of_baths: "",
             address2: "",
             zipcode: "", // zipcode
             state: "", // State
@@ -559,6 +595,67 @@ const CreateUpdateProject = (props) => {
                         onChange={handleInputChange}
                       />
                     </div>
+                    <div className="xl:col-span-6 col-span-12">
+                      <label htmlFor="lot_size_in_acres" className="form-label">
+                        Lot Size in Acres
+                      </label>
+                      <input
+                        required
+                        type="number"
+                        className="form-control"
+                        id="lot_size_in_acres"
+                        placeholder="Enter Lot Size in Acres"
+                        value={formData.lot_size_in_acres}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="xl:col-span-6 col-span-12">
+                      <label htmlFor="square_footage" className="form-label">
+                        Square Footage
+                      </label>
+                      <input
+                        required
+                        type="number"
+                        className="form-control"
+                        id="square_footage"
+                        placeholder="Enter Square Footage"
+                        value={formData.square_footage}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+
+                    <div className="xl:col-span-6 col-span-12">
+                      <label htmlFor="number_of_beds" className="form-label">
+                        Number of Beds
+                      </label>
+                      <input
+                        required
+                        type="number"
+                        className="form-control"
+                        id="number_of_beds"
+                        placeholder="Enter Number of Beds"
+                        value={formData.number_of_beds}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="xl:col-span-6 col-span-12">
+                      <label htmlFor="number_of_baths" className="form-label">
+                        Number of Baths
+                      </label>
+                      <input
+                        required
+                        type="number"
+                        className="form-control"
+                        id="number_of_baths"
+                        placeholder="Enter Number of Baths"
+                        value={formData.number_of_baths}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+
+
+
+
                     {/* input field for Project address line two*/}
                     <div className="xl:col-span-6 col-span-12">
                       <label htmlFor="project_address" className="form-label">
