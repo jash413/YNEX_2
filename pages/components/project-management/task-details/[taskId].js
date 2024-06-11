@@ -35,7 +35,21 @@ const TaskDetails = () => {
   });
   const [files, setFiles] = useState(null);
   const [Users, setUsers] = useState(null);
-
+  
+  function getBadgeColor(status) {
+    switch (status) {
+      case 'Pending':
+        return 'bg-warning';
+      case 'Approved':
+        return 'bg-success';
+      case 'Shipped':
+        return 'bg-info';
+      case 'Delivered':
+        return 'bg-primary';
+      default:
+        return 'bg-secondary';
+    }
+  }
   const handleInputChange = (event) => {
     const { id, value, checked } = event.target;
     let finalValue;
@@ -249,7 +263,7 @@ const TaskDetails = () => {
       <Pageheader
         mainpageurl="/components/project-management/tasks/"
         mainpage="Tasks"
-        activepage={`${taskData?.attributes?.task_name || "Unnamed Task"}`}
+        activepage={`${taskData?.attributes?.task_name || "Task Details"}`}
         isDisabled={true}
         loadingState={loadingState}
         getProjectDataFromLocalStorage={getProjectDataFromLocalStorage}
@@ -450,10 +464,10 @@ const TaskDetails = () => {
                               </p>
                             </div>
                             <div className="ms-auto">
-                              <span className="ltr:float-right rtl:float-left badge text-white bg-primary dark:text-white/50 timeline-badge whitespace-nowrap">
-                                {item.attributes.status}
-                              </span>
-                              <br />
+  <span className={`ltr:float-right rtl:float-left badge text-white ${getBadgeColor(item.attributes.status)} dark:text-white/50 timeline-badge whitespace-nowrap`}>
+    {item.attributes.status}
+  </span>
+  <br />
 
                               <span className="ltr:float-right rtl:float-left badge !bg-light text-[#8c9097] dark:text-white/50 timeline-badge whitespace-nowrap">
                                 {new Date(
@@ -512,6 +526,7 @@ const TaskDetails = () => {
                           id="punch_item_type"
                           placeholder="Write Punch Item Type"
                           onChange={handleInputChange}
+                          value={formData.punch_item_type}
                         />
                       </div>
                       <div className="xl:col-span-12 col-span-12">
@@ -524,6 +539,7 @@ const TaskDetails = () => {
                           rows="2"
                           placeholder="Write Description"
                           onChange={handleInputChange}
+                          value={formData.description}
                         ></textarea>
                       </div>
                       <div className="xl:col-span-12 col-span-12">
