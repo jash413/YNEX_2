@@ -400,8 +400,7 @@ const TaskDetails = () => {
                           <div className="flex items-center">
                             <div className="sm:mt-0 mt-2">
                               <p className="mb-0 text-[.875rem] font-semibold">
-                                {item.attributes.assignee_to_id}
-                              </p>
+                              {Users.find(user => user.id === item.attributes.assignee_to_id)?.attributes.username || ''}                              </p>
                               <p className="mb-0 text-[#8c9097] dark:text-white/50">
                                 {item.attributes.description}
                               </p>
