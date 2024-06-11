@@ -249,7 +249,7 @@ const TaskDetails = () => {
       <Pageheader
         mainpageurl="/components/project-management/tasks/"
         mainpage="Tasks"
-        activepage={`${taskData.attributes?.task_name || "Unnamed Task"}`}
+        activepage={`${taskData?.attributes?.task_name || "Unnamed Task"}`}
         isDisabled={true}
         loadingState={loadingState}
         getProjectDataFromLocalStorage={getProjectDataFromLocalStorage}
