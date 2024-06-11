@@ -125,6 +125,7 @@ const TaskDetails = () => {
         if (response.data.status === 201) {
           toast.dismiss("Loading");
           toast.success("Punch List created successfully");
+          getPunchList();
           setFormData({
             punch_item_type: "",
             description: "",
@@ -133,6 +134,8 @@ const TaskDetails = () => {
             document_urls: [],
             active: true,
           });
+          
+          document.getElementById('add-task').style.display = 'none';
           setFiles(null);
         } else {
           console.error("Failed to create Punch List:", response.data);
@@ -406,6 +409,11 @@ const TaskDetails = () => {
                               </p>
                             </div>
                             <div className="ms-auto">
+                            <span className="ltr:float-right rtl:float-left badge text-white bg-primary dark:text-white/50 timeline-badge whitespace-nowrap">
+                                {item.attributes.status}
+                              </span>
+                              <br />
+
                               <span className="ltr:float-right rtl:float-left badge !bg-light text-[#8c9097] dark:text-white/50 timeline-badge whitespace-nowrap">
                                 {new Date(
                                   item.attributes.updated_at
@@ -415,6 +423,8 @@ const TaskDetails = () => {
                                   day: "numeric",
                                 })}
                               </span>
+                              
+
                             </div>
                           </div>
                         </div>
@@ -424,12 +434,11 @@ const TaskDetails = () => {
                 ))}
               </ul>
               <div className="timeline-loadmore-container text-center">
-                <button
-                  type="button"
-                  className="ti-btn ti-btn-info ti-btn-loader"
+                <span
+                  className="bg-info text-white border rounded-sm p-1"
                 >
                   End of Timeline
-                </button>
+                </span>
               </div>
             </div>
           </div>

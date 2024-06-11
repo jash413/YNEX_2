@@ -44,8 +44,8 @@ const CreateUpdatePurchaseOrder = (props) => {
     setLoading(true);
   };
 
-  const updateLocalStorage = () => {
-    axios
+  const updateLocalStorage = async () => {
+    await axios
       .get(`${network.onlineUrl}api/purchase_Order`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -133,12 +133,13 @@ const CreateUpdatePurchaseOrder = (props) => {
         .then((response) => {
           console.log(response);
           if (response.data.status === 200) {
-            updateLocalStorage();
+            updateLocalStorage().then(() => {
             toast.dismiss("loading");
             toast.success("Purchase Order Updated Successfully");
             setTimeout(() => {
                 router.push('/components/project-management/purchase-orders/');
               }, 1000);
+            });
 
           }
         })
@@ -178,12 +179,13 @@ const CreateUpdatePurchaseOrder = (props) => {
         .then((response) => {
           console.log(response);
           if (response.data.status === 201) {
-            updateLocalStorage();
-            toast.dismiss("loading");
-            toast.success("Purchase Order Created Successfully");
-            setTimeout(() => {
-                router.push('/components/project-management/purchase-orders/');
-              }, 1000);
+            updateLocalStorage().then(() => {
+              toast.dismiss("loading");
+              toast.success("Purchase Order Updated Successfully");
+              setTimeout(() => {
+                  router.push('/components/project-management/purchase-orders/');
+                }, 1000);
+              });
           }
         })
         .catch((error) => {

@@ -20,6 +20,7 @@ const ViewTasks = () => {
   const [gcBuisness, setGcBuisness] = useState([]);
   const [token, setToken] = useState(null);
 
+
   const handleDelete = (id) => {
     return () => {
       axios
@@ -98,7 +99,9 @@ const ViewTasks = () => {
         <Link
           href={`/components/project-management/task-details/${original.id}`}
         >
+          <span className=" text-sky-700">
           {original.attributes.task_name}
+          </span>
         </Link>
       ),
     },
@@ -295,6 +298,15 @@ const ViewTasks = () => {
                     >
                       <Link href="/components/project-management/task-kanban/">
                         Kanban View
+                      </Link>
+                    </button>
+                    <button
+                      type="button"
+                      className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !mx-1 !text-[0.75rem] "
+                      data-hs-overlay="#compare-Task"
+                    >
+                      <Link href="!#">
+                        Invite Bids
                       </Link>
                     </button>
                   </div>

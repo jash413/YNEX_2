@@ -52,7 +52,7 @@ const CreateUpdateChangeOrder = (props) => {
 
   const updateLocalStorage = () => {
     axios
-      .get(`${network.onlineUrl}api/change_Order`, {
+      .get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
