@@ -86,7 +86,7 @@ const ProjectSummary = () => {
                 Project
               </Link>
             </button>
-          </div>
+          </div><br/>
 
           <div className="grid grid-cols-12 gap-x-6">
             <div className="xl:col-span-4 lg:col-span-4 md:col-span-6 sm:col-span-6 col-span-12">
