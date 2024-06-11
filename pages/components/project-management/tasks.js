@@ -300,15 +300,7 @@ const ViewTasks = () => {
                         Kanban View
                       </Link>
                     </button>
-                    <button
-                      type="button"
-                      className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !mx-1 !text-[0.75rem] "
-                      data-hs-overlay="#compare-Task"
-                    >
-                      <Link href="!#">
-                        Invite Bids
-                      </Link>
-                    </button>
+                    
                   </div>
                 </div>
 

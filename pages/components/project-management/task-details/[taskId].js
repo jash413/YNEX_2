@@ -91,6 +91,29 @@ const TaskDetails = () => {
       });
   };
 
+  const handleDelete = (id) => {
+    axios
+      .delete(`${network.onlineUrl}api/punch_List/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        if (response.data.status === 204) {
+          toast.success("Punch List deleted successfully");
+          getPunchList();
+        } else {
+          console.error("Failed to delete Punch List:", response.data);
+          toast.error("Failed to delete Punch List");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting Punch List:", error);
+        toast.error("An error occurred while deleting Punch List");
+      });
+  };
+
+
   const handleSubmit = (event) => {
     event.preventDefault();
     toast.info("Please wait while we process your request. ", {
@@ -134,8 +157,7 @@ const TaskDetails = () => {
             document_urls: [],
             active: true,
           });
-          
-          document.getElementById('add-task').style.display = 'none';
+
           setFiles(null);
         } else {
           console.error("Failed to create Punch List:", response.data);
@@ -226,10 +248,12 @@ const TaskDetails = () => {
       <Seo title={"Task Details"} />
       <Pageheader
         mainpageurl="/components/project-management/tasks/"
-        mainpage="Project Management"
-        activepage="Task Details"
+        mainpage="Tasks"
+        activepage={`${taskData.attributes?.task_name || "Unnamed Task"}`}
+        isDisabled={true}
         loadingState={loadingState}
         getProjectDataFromLocalStorage={getProjectDataFromLocalStorage}
+        
       />
       <ToastContainer />
       {loading ? (
@@ -272,6 +296,13 @@ const TaskDetails = () => {
                   <i className="ri-add-line"></i>Add Punch List
                 </Link>
               </div>
+              <button
+                type="button"
+                className="hs-dropdown-toggle ti-btn ti-btn-primary-full !py-1 !px-2 !mx-1 !text-[0.75rem] "
+                data-hs-overlay="#compare-Task"
+              >
+                <Link href="!#">Invite Bids</Link>
+              </button>
             </div>
             <div className="box-body">
               <div className="bg-white dark:bg-bodybg p-4 rounded-lg shadow-sm mb-4">
@@ -403,13 +434,23 @@ const TaskDetails = () => {
                           <div className="flex items-center">
                             <div className="sm:mt-0 mt-2">
                               <p className="mb-0 text-[.875rem] font-semibold">
-                              {Users.find(user => user.id === item.attributes.assignee_to_id)?.attributes.username || ''}                              </p>
+                                {Users.find(
+                                  (user) =>
+                                    user.id === item.attributes.assignee_to_id
+                                )?.attributes.username || ""}{" "}
+                              </p>
                               <p className="mb-0 text-[#8c9097] dark:text-white/50">
                                 {item.attributes.description}
+                                <button
+                                  onClick={() => handleDelete(item.id)}
+                                  className="ml-2 btn btn-danger"
+                                >
+            <i className="ri-delete-bin-6-fill text-red text-lg"></i>
+                                </button>
                               </p>
                             </div>
                             <div className="ms-auto">
-                            <span className="ltr:float-right rtl:float-left badge text-white bg-primary dark:text-white/50 timeline-badge whitespace-nowrap">
+                              <span className="ltr:float-right rtl:float-left badge text-white bg-primary dark:text-white/50 timeline-badge whitespace-nowrap">
                                 {item.attributes.status}
                               </span>
                               <br />
@@ -423,8 +464,6 @@ const TaskDetails = () => {
                                   day: "numeric",
                                 })}
                               </span>
-                              
-
                             </div>
                           </div>
                         </div>
@@ -434,9 +473,7 @@ const TaskDetails = () => {
                 ))}
               </ul>
               <div className="timeline-loadmore-container text-center">
-                <span
-                  className="bg-info text-white border rounded-sm p-1"
-                >
+                <span className="bg-info text-white border rounded-sm p-1">
                   End of Timeline
                 </span>
               </div>
