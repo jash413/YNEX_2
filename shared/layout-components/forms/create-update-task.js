@@ -133,7 +133,7 @@ const CreateUpdateTask = (props) => {
 
           setFiles(task.files_urls.map((file_url) => ({ source: file_url })));
           setFormData({
-            taskCode: task.task_code_id,
+            taskCode: task.task_code,
             taskName: task.task_name,
             description: task.description,
             startDate: task.start_date,
@@ -194,7 +194,7 @@ const CreateUpdateTask = (props) => {
                 type: "string",
                 id: formData.task_original_id,
                 attributes: {
-                  task_code_id: formData.taskCode,
+                  task_code: formData.taskCode,
                   task_name: formData.taskName,
                   description: formData.description,
                   start_date: formData.startDate
@@ -247,7 +247,7 @@ const CreateUpdateTask = (props) => {
 
                 attributes: {
                   project_id: selectedProject.id,
-                  task_code_id: Number(formData.taskCode),
+                  task_code: Number(formData.taskCode),
                   task_name: formData.taskName,
                   description: formData.description,
                   start_date: formData.startDate
