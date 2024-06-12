@@ -384,6 +384,7 @@ const CreateUpdateTask = (props) => {
                 </label>
                 <input
                   type="number"
+                  min={0}
                   className="form-control"
                   id="taskOwnerId"
                   onChange={handleInputChange}
@@ -445,6 +446,7 @@ const CreateUpdateTask = (props) => {
                 </label>
                 <input
                   type="number"
+                  min={0}
                   className="form-control"
                   id="percentageComplete"
                   onChange={handleInputChange}
@@ -483,6 +485,7 @@ const CreateUpdateTask = (props) => {
                 </label>
                 <input
                   type="number"
+                  min={0}
                   className="form-control"
                   id="estimatedBudget"
                   onChange={handleInputChange}
@@ -495,6 +498,7 @@ const CreateUpdateTask = (props) => {
                 </label>
                 <input
                   type="number"
+                  min={0}
                   className="form-control"
                   id="actualSpent"
                   onChange={handleInputChange}

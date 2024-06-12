@@ -576,6 +576,7 @@ const CreateUpdateProject = (props) => {
                         id="budget"
                         placeholder="Enter Budget"
                         value={formData.budget}
+                        min={0}
                         onChange={handleInputChange}
                       />
                     </div>
@@ -602,6 +603,7 @@ const CreateUpdateProject = (props) => {
                       <input
                         required
                         type="number"
+                        min={0}
                         className="form-control"
                         id="lot_size_in_acres"
                         placeholder="Enter Lot Size in Acres"
@@ -616,6 +618,7 @@ const CreateUpdateProject = (props) => {
                       <input
                         required
                         type="number"
+                        min={0}
                         className="form-control"
                         id="square_footage"
                         placeholder="Enter Square Footage"
@@ -631,6 +634,7 @@ const CreateUpdateProject = (props) => {
                       <input
                         required
                         type="number"
+                        min={0}
                         className="form-control"
                         id="number_of_beds"
                         placeholder="Enter Number of Beds"
@@ -645,6 +649,7 @@ const CreateUpdateProject = (props) => {
                       <input
                         required
                         type="number"
+                        min={0}
                         className="form-control"
                         id="number_of_baths"
                         placeholder="Enter Number of Baths"
@@ -679,6 +684,7 @@ const CreateUpdateProject = (props) => {
                       <input
                         required
                         type="number"
+                        min={0}
                         className="form-control"
                         id="zipcode"
                         placeholder="Enter zipcode"
