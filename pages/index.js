@@ -42,6 +42,15 @@ const Firebaselogin = () => {
       .then((res) => {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("userid",res.data.id);
+        localStorage.removeItem("projectTasks");
+        localStorage.removeItem("projectChangeOrders");
+        localStorage.removeItem("projectPurchaseOrders");
+        localStorage.removeItem("projectProgressionNotes");
+        localStorage.removeItem("Users");
+        localStorage.removeItem("gcBuisness");
+        localStorage.removeItem("projectSpecifications");
+        localStorage.removeItem("projectSelections");
+        localStorage.removeItem("selectedProject");
         RouteChange();
       })
       .catch((err) => {

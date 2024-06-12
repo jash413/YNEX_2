@@ -71,18 +71,23 @@ const CreateUpdateTask = (props) => {
   const [loading, setLoading] = useState(false);
 
   const updateLocalStorage = async () => {
-  try {
-    const response = await axios.get(`${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    localStorage.setItem("projectTasks", JSON.stringify(response.data.body.data));
-  } catch (error) {
-    console.log(error);
-  }
-};
-
+    try {
+      const response = await axios.get(
+        `${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      localStorage.setItem(
+        "projectTasks",
+        JSON.stringify(response.data.body.data)
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const loadingState = () => {
     setLoading(true);
@@ -108,7 +113,7 @@ const CreateUpdateTask = (props) => {
         })
         .then((response) => {
           const task = response.data.body.data.attributes;
-          
+
           setFiles(task.files_urls.map((file_url) => ({ source: file_url })));
           setFormData({
             taskCode: task.task_code_id,
@@ -147,7 +152,6 @@ const CreateUpdateTask = (props) => {
     status: z.string().nonempty({ message: "Status is required" }),
     priority: z.string().nonempty({ message: "Priority is required" }),
   });
-
 
   const handleInputChange = (event) => {
     const { id, value } = event.target;
@@ -202,13 +206,13 @@ const CreateUpdateTask = (props) => {
           .then((response) => {
             if (response.status === 200) {
               updateLocalStorage().then(() => {
-  toast.dismiss("loading");
-  setFormData({});
-  toast.success("Task created successfully");
-  setTimeout(() => {
-    router.push("/components/project-management/tasks");
-  }, 1000);
-});
+                toast.dismiss("loading");
+                setFormData({});
+                toast.success("Task updated successfully");
+                setTimeout(() => {
+                  router.push("/components/project-management/tasks");
+                }, 1000);
+              });
             }
             console.log(response);
           })
