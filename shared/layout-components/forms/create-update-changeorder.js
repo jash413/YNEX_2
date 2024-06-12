@@ -198,12 +198,13 @@ const CreateUpdateChangeOrder = (props) => {
         .then((response) => {
           console.log(response);
           if (response.data.status === 201) {
-            updateLocalStorage();
-            toast.dismiss("loading");
-            toast.success("Change Order Created Successfully");
-            setTimeout(() => {
-              router.push("/components/project-management/change-orders/");
-            }, 1000);
+            updateLocalStorage().then(() => {
+              toast.dismiss("loading");
+              toast.success("Change Order Created Successfully");
+              setTimeout(() => {
+                router.push("/components/project-management/change-orders/");
+              }, 1000);
+            });
           }
         })
         .catch((error) => {
