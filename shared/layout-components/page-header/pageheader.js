@@ -53,7 +53,23 @@ const Pageheader = ({
       }
     };
 
+    const fetchGcBuisness = async () => {
+      try {
+        const response = await axios.get(
+          `${network.onlineUrl}api/business?filter[type]=GC`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        localStorage.setItem("gcBuisness", JSON.stringify(response.data.body.data));
+      } catch (error) {
+        console.error("Error fetching GC Buisness:", error);
+      }
+    };
+
     fetchProjects();
+    fetchGcBuisness();
   }, []);
 
   const handleProjectSelect = async (selectedOption) => {

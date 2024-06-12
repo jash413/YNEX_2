@@ -387,6 +387,7 @@ const CreateUpdatePurchaseOrder = (props) => {
                       </label>
                       <input
                         type="number"
+                        min={0}
                         className="form-control"
                         id="amount"
                         value={formData.amount}

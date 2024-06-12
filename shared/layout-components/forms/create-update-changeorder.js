@@ -374,6 +374,7 @@ const CreateUpdateChangeOrder = (props) => {
                       <input
                         required
                         type="number"
+                        min={0}
                         className="form-control"
                         id="amount"
                         placeholder="Enter Amount"
