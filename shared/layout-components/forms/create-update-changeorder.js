@@ -50,8 +50,8 @@ const CreateUpdateChangeOrder = (props) => {
     setLoading(true);
   };
 
-  const updateLocalStorage = () => {
-    axios
+  const updateLocalStorage = async () => {
+    await axios
       .get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -152,12 +152,13 @@ const CreateUpdateChangeOrder = (props) => {
         .then((response) => {
           console.log(response);
           if (response.data.status === 200) {
-            updateLocalStorage();
-            toast.dismiss("loading");
-            toast.success("Change Order Updated Successfully");
-            setTimeout(() => {
-              router.push("/components/project-management/change-orders/");
-            }, 1000);
+            updateLocalStorage().then(() => {
+              toast.dismiss("loading");
+              toast.success("Change Order Updated Successfully");
+              setTimeout(() => {
+                router.push("/components/project-management/change-orders/");
+              }, 1000);
+            });
 
           }
         })

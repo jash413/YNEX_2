@@ -209,10 +209,10 @@ const CreateUpdateProject = (props) => {
     setFiles(updatedFiles);
   
     // Remove the file URL from the formData
-    const updatedDocumentUrls = formData.document_urls.filter(
+    const updatedDocumentUrls = formData.files.filter(
       (url) => url !== file.source
     );
-    setFormData({ ...formData, document_urls: updatedDocumentUrls });
+    setFormData({ ...formData, files: updatedDocumentUrls });
   };
   useEffect(() => {
     getDataFromLocalStorage();
@@ -228,11 +228,10 @@ const CreateUpdateProject = (props) => {
         })
         .then((response) => {
           const project = response.data.body.data;
-          fetchAndSetFiles(project.attributes.document_urls, setFiles).catch(
-            (e) =>
-              console.log(
-                "There was a problem with the fetch operation: " + e.message
-              )
+          setFiles(
+            response.data.body.data.attributes.document_urls.map((url) => {
+              return { source: url };
+            })
           );
           setFormData({
             selectedProject: project.id,
