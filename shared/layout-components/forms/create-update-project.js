@@ -198,7 +198,22 @@ const CreateUpdateProject = (props) => {
     );
     setFiles(files.map((file) => ({ source: file })));
   }
-
+  const handleFileRemove = (error, file) => {
+    if (error) {
+      console.log("Error removing file:", error);
+      return;
+    }
+  
+    // Remove the file from the state
+    const updatedFiles = files.filter((f) => f.source !== file.source);
+    setFiles(updatedFiles);
+  
+    // Remove the file URL from the formData
+    const updatedDocumentUrls = formData.files.filter(
+      (url) => url !== file.source
+    );
+    setFormData({ ...formData, files: updatedDocumentUrls });
+  };
   useEffect(() => {
     getDataFromLocalStorage();
     if (window !== undefined) {
@@ -213,11 +228,10 @@ const CreateUpdateProject = (props) => {
         })
         .then((response) => {
           const project = response.data.body.data;
-          fetchAndSetFiles(project.attributes.document_urls, setFiles).catch(
-            (e) =>
-              console.log(
-                "There was a problem with the fetch operation: " + e.message
-              )
+          setFiles(
+            response.data.body.data.attributes.document_urls.map((url) => {
+              return { source: url };
+            })
           );
           setFormData({
             selectedProject: project.id,
@@ -790,6 +804,7 @@ const CreateUpdateProject = (props) => {
                         onupdatefiles={setFiles}
                         allowMultiple={true}
                         maxFiles={3}
+                        onremovefile={handleFileRemove}
                         server={{
                           url: "https://backend-api-topaz.vercel.app/api/upload",
                           process: {

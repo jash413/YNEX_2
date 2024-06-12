@@ -50,8 +50,8 @@ const CreateUpdateChangeOrder = (props) => {
     setLoading(true);
   };
 
-  const updateLocalStorage = () => {
-    axios
+  const updateLocalStorage = async () => {
+    await axios
       .get(`${network.onlineUrl}api/change_Order?filter[project]=${selectedProject.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -97,6 +97,22 @@ const CreateUpdateChangeOrder = (props) => {
       document_urls: [...formData.document_urls, response[0].file_url],
     });
   };
+  const handleFileRemove = (error, file) => {
+    if (error) {
+      console.log("Error removing file:", error);
+      return;
+    }
+  
+    // Remove the file from the state
+    const updatedFiles = files.filter((f) => f.source !== file.source);
+    setFiles(updatedFiles);
+  
+    // Remove the file URL from the formData
+    const updatedDocumentUrls = formData.document_urls.filter(
+      (url) => url !== file.source
+    );
+    setFormData({ ...formData, document_urls: updatedDocumentUrls });
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -136,12 +152,13 @@ const CreateUpdateChangeOrder = (props) => {
         .then((response) => {
           console.log(response);
           if (response.data.status === 200) {
-            updateLocalStorage();
-            toast.dismiss("loading");
-            toast.success("Change Order Updated Successfully");
-            setTimeout(() => {
-              router.push("/components/project-management/change-orders/");
-            }, 1000);
+            updateLocalStorage().then(() => {
+              toast.dismiss("loading");
+              toast.success("Change Order Updated Successfully");
+              setTimeout(() => {
+                router.push("/components/project-management/change-orders/");
+              }, 1000);
+            });
 
           }
         })
@@ -181,12 +198,13 @@ const CreateUpdateChangeOrder = (props) => {
         .then((response) => {
           console.log(response);
           if (response.data.status === 201) {
-            updateLocalStorage();
-            toast.dismiss("loading");
-            toast.success("Change Order Created Successfully");
-            setTimeout(() => {
-              router.push("/components/project-management/change-orders/");
-            }, 1000);
+            updateLocalStorage().then(() => {
+              toast.dismiss("loading");
+              toast.success("Change Order Created Successfully");
+              setTimeout(() => {
+                router.push("/components/project-management/change-orders/");
+              }, 1000);
+            });
           }
         })
         .catch((error) => {
@@ -314,6 +332,7 @@ const CreateUpdateChangeOrder = (props) => {
                         onupdatefiles={setFiles}
                         allowMultiple={true}
                         maxFiles={3}
+                        onremovefile={handleFileRemove}
                         server={{
                           url: "https://backend-api-topaz.vercel.app/api/upload",
                           process: {
