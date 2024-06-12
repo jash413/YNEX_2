@@ -3,39 +3,14 @@ import Seo from "@/shared/layout-components/seo/seo";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Select from "react-select";
-import { z } from "zod";
-import { SingleButtons } from "@/shared/data/ui-elements/dropdownsdata";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
-const MultiSelect = dynamic(() => import("react-multi-select-component"), {
-  ssr: false,
-});
 const DatePicker = dynamic(() => import("react-datepicker"), { ssr: false });
-const today = new Date();
-const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import network from "@/config";
-import Preloader from "../preloader/preloader";
-import { set } from "date-fns";
-import { h } from "gridjs";
-import { to } from "react-spring";
-
-const formDataSchema = z.object({
-  selectedProject: z.string(),
-  client_name: z.string(),
-  description: z.string(),
-  address1: z.string(),
-  address2: z.string(),
-  zipcode: z.number(),
-  state: z.string(),
-  budget: z.number(),
-  start_date: z.date(),
-  end_date: z.date(),
-  files: z.array(z.string()),
-});
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const CreateUpdateProject = (props) => {
   const router = useRouter();
@@ -66,7 +41,7 @@ const CreateUpdateProject = (props) => {
 
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const states = {
     AL: "Alabama",
     AK: "Alaska",
@@ -165,6 +140,7 @@ const CreateUpdateProject = (props) => {
       files: [...formData.files, response[0].file_url],
     });
   };
+
   useEffect(() => {
     fetch("/api/users/")
       .then((response) => response.json())
@@ -172,48 +148,23 @@ const CreateUpdateProject = (props) => {
       .catch((error) => console.error("Error:", error));
   }, []);
 
-  async function fetchAndSetFiles(fileNames, setFiles) {
-    const files = await Promise.all(
-      fileNames.map(async (fileName) => {
-        let response = await fetch(
-          `${network.onlineUrl}api/download_file/?filename=${fileName}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            redirect: "manual",
-          }
-        );
-        console.log(response);
-        if (response.status === 302) {
-          // Follow the redirect
-          const redirectUrl = response.headers.get("Location");
-          response = await fetch(redirectUrl);
-        }
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.blob();
-      })
-    );
-    setFiles(files.map((file) => ({ source: file })));
-  }
   const handleFileRemove = (error, file) => {
     if (error) {
       console.log("Error removing file:", error);
       return;
     }
-  
+
     // Remove the file from the state
     const updatedFiles = files.filter((f) => f.source !== file.source);
     setFiles(updatedFiles);
-  
+
     // Remove the file URL from the formData
     const updatedDocumentUrls = formData.files.filter(
       (url) => url !== file.source
     );
     setFormData({ ...formData, files: updatedDocumentUrls });
   };
+
   useEffect(() => {
     getDataFromLocalStorage();
     if (window !== undefined) {
@@ -256,12 +207,14 @@ const CreateUpdateProject = (props) => {
             square_footage: project.attributes.square_footage,
             number_of_beds: project.attributes.number_of_beds,
             number_of_baths: project.attributes.number_of_baths,
-
           });
+          setLoading(false);
         })
         .catch((error) => {
           console.log(error);
         });
+    } else if (props.formType === "create") {
+      setLoading(false);
     }
   }, [token]);
 
@@ -326,7 +279,7 @@ const CreateUpdateProject = (props) => {
             },
           }
         )
-        .then( async (response) => {
+        .then(async (response) => {
           if (response.data.status == 200) {
             setFormData({
               name: "",
@@ -346,15 +299,19 @@ const CreateUpdateProject = (props) => {
               files: [], // Files drop area → Add the ability to upload multiple files like gmail allows user to upload multiple files with drop and drag functionality
             });
             toast.dismiss("loading");
-            await axios.get(`${network.onlineUrl}api/project/${selectedProject.id}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            })
-            .then((response) => {
-              const project = response.data.body.data;
-              localStorage.setItem("selectedProject", JSON.stringify(project));
-            })
+            await axios
+              .get(`${network.onlineUrl}api/project/${selectedProject.id}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              })
+              .then((response) => {
+                const project = response.data.body.data;
+                localStorage.setItem(
+                  "selectedProject",
+                  JSON.stringify(project)
+                );
+              });
             toast.success("Project Updated Successfully", {
               position: "top-right",
               autoClose: 5000,
@@ -365,7 +322,7 @@ const CreateUpdateProject = (props) => {
               progress: undefined,
               theme: "light",
             });
-            
+
             setTimeout(() => {
               router.push("/components/project-management/project-summary/");
             }, 1000);
@@ -412,7 +369,6 @@ const CreateUpdateProject = (props) => {
                 square_footage: Number(formData.square_footage),
                 number_of_beds: Number(formData.number_of_beds),
                 number_of_baths: Number(formData.number_of_baths),
-
               },
             },
           },
@@ -487,360 +443,364 @@ const CreateUpdateProject = (props) => {
         loadingState={loadingState}
         isDisabled={true}
       />
-
-      <div className="box-body">
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-12 gap-6">
-            <div className="xl:col-span-12 col-span-12">
-              <div className="box custom-box">
-                <div className="box-header">
-                  <div className="box-title">
-                    {formType === "update"
-                      ? "Update Project"
-                      : "Create Project"}
+      {loading ? (
+        <Preloader />
+      ) : (
+        <div className="box-body">
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-12 gap-6">
+              <div className="xl:col-span-12 col-span-12">
+                <div className="box custom-box">
+                  <div className="box-header">
+                    <div className="box-title">
+                      {formType === "update"
+                        ? "Update Project"
+                        : "Create Project"}
+                    </div>
                   </div>
-                </div>
-                <div className="box-body">
-                  <div className="grid grid-cols-12 gap-4">
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="template" className="form-label">
-                        Select Type :
-                      </label>
-                      <Select
-                        required
-                        name="template"
-                        options={Selectoption1}
-                        className="js-example-basic-single w-full"
-                        isSearchable
-                        menuPlacement="auto"
-                        classNamePrefix="Select2"
-                        defaultValue={[Selectoption1[0]]}
-                        onChange={(option) => setSelectTemplate(option.value)}
-                      />
-                    </div>
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="selectedProject" className="form-label">
-                        Project Name :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="name"
-                        placeholder="Enter Project Name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="xl:col-span-4 col-span-12">
-                      <label className="form-label">Exception Notes</label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="exception_notes"
-                        placeholder="Enter Exception Notes"
-                        value={formData.exception_notes}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="businessId" className="form-label">
-                        Business ID
-                      </label>
-                      <Select
-                        id="businessId"
-                        value={
-                          gcBusiness?.find(
-                            (business) => business.id === formData.businessId
-                          )
-                            ? {
-                                value: formData.businessId,
-                                label: gcBusiness.find(
-                                  (business) =>
-                                    business.id === formData.businessId
-                                ).attributes.name,
-                              }
-                            : null
-                        }
-                        onChange={(selectedOption) =>
-                          handleInputChange({
-                            target: {
-                              id: "businessId",
-                              value: selectedOption.value,
+                  <div className="box-body">
+                    <div className="grid grid-cols-12 gap-4">
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="template" className="form-label">
+                          Select Type :
+                        </label>
+                        <Select
+                          required
+                          name="template"
+                          options={Selectoption1}
+                          className="js-example-basic-single w-full"
+                          isSearchable
+                          menuPlacement="auto"
+                          classNamePrefix="Select2"
+                          defaultValue={[Selectoption1[0]]}
+                          onChange={(option) => setSelectTemplate(option.value)}
+                        />
+                      </div>
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="selectedProject" className="form-label">
+                          Project Name :
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          className="form-control"
+                          id="name"
+                          placeholder="Enter Project Name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="xl:col-span-4 col-span-12">
+                        <label className="form-label">Exception Notes</label>
+                        <input
+                          required
+                          type="text"
+                          className="form-control"
+                          id="exception_notes"
+                          placeholder="Enter Exception Notes"
+                          value={formData.exception_notes}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="businessId" className="form-label">
+                          Business ID
+                        </label>
+                        <Select
+                          id="businessId"
+                          value={
+                            gcBusiness?.find(
+                              (business) => business.id === formData.businessId
+                            )
+                              ? {
+                                  value: formData.businessId,
+                                  label: gcBusiness.find(
+                                    (business) =>
+                                      business.id === formData.businessId
+                                  ).attributes.name,
+                                }
+                              : null
+                          }
+                          onChange={(selectedOption) =>
+                            handleInputChange({
+                              target: {
+                                id: "businessId",
+                                value: selectedOption.value,
+                              },
+                            })
+                          }
+                          options={gcBusiness.map((business) => ({
+                            value: business.id,
+                            label: business.attributes.name,
+                          }))}
+                        />
+                      </div>
+
+                      {/* input field for Budget */}
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="budget" className="form-label">
+                          Budget :
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          className="form-control"
+                          id="budget"
+                          placeholder="Enter Budget"
+                          value={formData.budget}
+                          min={0}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      {/* input field for Project address line one*/}
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="project_address" className="form-label">
+                          Project Address Line 1:
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          className="form-control"
+                          id="address1"
+                          placeholder="Enter Project Address"
+                          value={formData.address1}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="xl:col-span-6 col-span-12">
+                        <label
+                          htmlFor="lot_size_in_acres"
+                          className="form-label"
+                        >
+                          Lot Size in Acres
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          min={0}
+                          className="form-control"
+                          id="lot_size_in_acres"
+                          placeholder="Enter Lot Size in Acres"
+                          value={formData.lot_size_in_acres}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="square_footage" className="form-label">
+                          Square Footage
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          min={0}
+                          className="form-control"
+                          id="square_footage"
+                          placeholder="Enter Square Footage"
+                          value={formData.square_footage}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="number_of_beds" className="form-label">
+                          Number of Beds
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          min={0}
+                          className="form-control"
+                          id="number_of_beds"
+                          placeholder="Enter Number of Beds"
+                          value={formData.number_of_beds}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="number_of_baths" className="form-label">
+                          Number of Baths
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          min={0}
+                          className="form-control"
+                          id="number_of_baths"
+                          placeholder="Enter Number of Baths"
+                          value={formData.number_of_baths}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      {/* input field for Project address line two*/}
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="project_address" className="form-label">
+                          Project Address Line 2 :
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          className="form-control"
+                          id="address2"
+                          placeholder="Enter Project Address"
+                          value={formData.address2}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      {/* input field for zipcode */}
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="zipcode" className="form-label">
+                          Zipcode :
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          min={0}
+                          className="form-control"
+                          id="zipcode"
+                          placeholder="Enter zipcode"
+                          value={formData.zipcode}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      {/* input field for state */}
+                      <div className="xl:col-span-6 col-span-12">
+                        <label htmlFor="state" className="form-label">
+                          State :
+                        </label>
+                        <Select
+                          required
+                          name="state"
+                          options={Object.entries(states).map(
+                            ([key, value]) => ({
+                              value: key,
+                              label: value,
+                            })
+                          )}
+                          className="js-example-basic-single w-full"
+                          isSearchable
+                          menuPlacement="auto"
+                          classNamePrefix="Select2"
+                          defaultValue={[
+                            {
+                              value: formData.state,
+                              label: states[formData.state],
                             },
-                          })
-                        }
-                        options={gcBusiness.map((business) => ({
-                          value: business.id,
-                          label: business.attributes.name,
-                        }))}
-                      />
-                    </div>
-
-                    {/* input field for Budget */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="budget" className="form-label">
-                        Budget :
-                      </label>
-                      <input
-                        required
-                        type="number"
-                        className="form-control"
-                        id="budget"
-                        placeholder="Enter Budget"
-                        value={formData.budget}
-                        min={0}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    {/* input field for Project address line one*/}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="project_address" className="form-label">
-                        Project Address Line 1:
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="address1"
-                        placeholder="Enter Project Address"
-                        value={formData.address1}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="lot_size_in_acres" className="form-label">
-                        Lot Size in Acres
-                      </label>
-                      <input
-                        required
-                        type="number"
-                        min={0}
-                        className="form-control"
-                        id="lot_size_in_acres"
-                        placeholder="Enter Lot Size in Acres"
-                        value={formData.lot_size_in_acres}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="square_footage" className="form-label">
-                        Square Footage
-                      </label>
-                      <input
-                        required
-                        type="number"
-                        min={0}
-                        className="form-control"
-                        id="square_footage"
-                        placeholder="Enter Square Footage"
-                        value={formData.square_footage}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="number_of_beds" className="form-label">
-                        Number of Beds
-                      </label>
-                      <input
-                        required
-                        type="number"
-                        min={0}
-                        className="form-control"
-                        id="number_of_beds"
-                        placeholder="Enter Number of Beds"
-                        value={formData.number_of_beds}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="number_of_baths" className="form-label">
-                        Number of Baths
-                      </label>
-                      <input
-                        required
-                        type="number"
-                        min={0}
-                        className="form-control"
-                        id="number_of_baths"
-                        placeholder="Enter Number of Baths"
-                        value={formData.number_of_baths}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-
-
-
-                    {/* input field for Project address line two*/}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="project_address" className="form-label">
-                        Project Address Line 2 :
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        className="form-control"
-                        id="address2"
-                        placeholder="Enter Project Address"
-                        value={formData.address2}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for zipcode */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="zipcode" className="form-label">
-                        Zipcode :
-                      </label>
-                      <input
-                        required
-                        type="number"
-                        min={0}
-                        className="form-control"
-                        id="zipcode"
-                        placeholder="Enter zipcode"
-                        value={formData.zipcode}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for state */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label htmlFor="state" className="form-label">
-                        State :
-                      </label>
-                     <Select
-                        required
-                        name="state"
-                        options={Object.entries(states).map(([key, value]) => ({
-                          value: key,
-                          label: value,
-                        }))}
-                        className="js-example-basic-single w-full"
-                        isSearchable
-                        menuPlacement="auto"
-                        classNamePrefix="Select2"
-                        defaultValue={[
-                          {
+                          ]}
+                          value={{
                             value: formData.state,
                             label: states[formData.state],
-                          },
-                        ]}
-                        value={{
-                          value: formData.state,
-                          label: states[formData.state],
-                        }
-                        }
-                        onChange={(option) => {
-                          setFormData({ ...formData, state: option.value });
-                        }}
-                      />
-                    </div>
+                          }}
+                          onChange={(option) => {
+                            setFormData({ ...formData, state: option.value });
+                          }}
+                        />
+                      </div>
 
-                    <div className="xl:col-span-12 col-span-12 mb-4">
-                      <label htmlFor="description" className="form-label">
-                        Project Description :
-                      </label>
-                      <textarea
-                        required
-                        className="form-control"
-                        id="description"
-                        rows="3"
-                        cols="50"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                      />
-                    </div>
+                      <div className="xl:col-span-12 col-span-12 mb-4">
+                        <label htmlFor="description" className="form-label">
+                          Project Description :
+                        </label>
+                        <textarea
+                          required
+                          className="form-control"
+                          id="description"
+                          rows="3"
+                          cols="50"
+                          value={formData.description}
+                          onChange={handleInputChange}
+                        />
+                      </div>
 
-                    <div className="xl:col-span-6 col-span-12">
-                      <label className="form-label">Start Date :</label>
-                      <div className="form-group">
-                        <div className="input-group">
-                          <div className="input-group-text text-muted">
-                            <i className="ri-calendar-line"></i>
+                      <div className="xl:col-span-6 col-span-12">
+                        <label className="form-label">Start Date :</label>
+                        <div className="form-group">
+                          <div className="input-group">
+                            <div className="input-group-text text-muted">
+                              <i className="ri-calendar-line"></i>
+                            </div>
+                            <DatePicker
+                              required
+                              placeholder="Choose the date"
+                              className="ti-form-input ltr:rounded-l-none rtl:rounded-r-none focus:z-10"
+                              selected={formData.start_date}
+                              onChange={(date) =>
+                                setFormData({ ...formData, start_date: date })
+                              }
+                            />
                           </div>
-                          <DatePicker
-                            required
-                            placeholder="Choose the date"
-                            className="ti-form-input ltr:rounded-l-none rtl:rounded-r-none focus:z-10"
-                            selected={formData.start_date}
-                            onChange={(date) =>
-                              setFormData({ ...formData, start_date: date })
-                            }
-                          />
                         </div>
                       </div>
-                    </div>
-                    {/* input field for End date */}
-                    <div className="xl:col-span-6 col-span-12">
-                      <label className="form-label">End Date :</label>
-                      <div className="form-group">
-                        <div className="input-group">
-                          <div className="input-group-text text-muted">
-                            <i className="ri-calendar-line"></i>
+                      {/* input field for End date */}
+                      <div className="xl:col-span-6 col-span-12">
+                        <label className="form-label">End Date :</label>
+                        <div className="form-group">
+                          <div className="input-group">
+                            <div className="input-group-text text-muted">
+                              <i className="ri-calendar-line"></i>
+                            </div>
+                            <DatePicker
+                              required
+                              placeholder="Choose the date"
+                              className="ti-form-input ltr:rounded-l-none rtl:rounded-r-none focus:z-10"
+                              selected={formData.end_date}
+                              onChange={(date) =>
+                                setFormData({ ...formData, end_date: date })
+                              }
+                            />
                           </div>
-                          <DatePicker
-                            required
-                            placeholder="Choose the date"
-                            className="ti-form-input ltr:rounded-l-none rtl:rounded-r-none focus:z-10"
-                            selected={formData.end_date}
-                            onChange={(date) =>
-                              setFormData({ ...formData, end_date: date })
-                            }
-                          />
                         </div>
                       </div>
-                    </div>
 
-                    {/* Add other input fields here */}
-                    <div className="xl:col-span-12 col-span-12">
-                      <label htmlFor="text-area" className="form-label">
-                        Attachments
-                      </label>
-                      <FilePond
-                        files={files}
-                        onupdatefiles={setFiles}
-                        allowMultiple={true}
-                        maxFiles={3}
-                        onremovefile={handleFileRemove}
-                        server={{
-                          url: "https://backend-api-topaz.vercel.app/api/upload",
-                          process: {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
+                      {/* Add other input fields here */}
+                      <div className="xl:col-span-12 col-span-12">
+                        <label htmlFor="text-area" className="form-label">
+                          Attachments
+                        </label>
+                        <FilePond
+                          files={files}
+                          onupdatefiles={setFiles}
+                          allowMultiple={true}
+                          maxFiles={3}
+                          onremovefile={handleFileRemove}
+                          server={{
+                            url: "https://backend-api-topaz.vercel.app/api/upload",
+                            process: {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
                             },
-                          },
-                        }}
-                        onprocessfile={(error, file) => {
-                          if (error) {
-                            console.log("error", error);
-                          } else {
-                            handleFileChange(JSON.parse(file.serverId));
-                          }
-                        }}
-                        name="files"
-                        labelIdle="Drag & Drop your file here or click "
-                      />
+                          }}
+                          onprocessfile={(error, file) => {
+                            if (error) {
+                              console.log("error", error);
+                            } else {
+                              handleFileChange(JSON.parse(file.serverId));
+                            }
+                          }}
+                          name="files"
+                          labelIdle="Drag & Drop your file here or click "
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="box-footer">
-                  <button
-                    type="submit"
-                    className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
-                  >
-                    {formType === "update"
-                      ? "Update Project"
-                      : "Create Project"}
-                  </button>
+                  <div className="box-footer">
+                    <button
+                      type="submit"
+                      className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
+                    >
+                      {formType === "update"
+                        ? "Update Project"
+                        : "Create Project"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

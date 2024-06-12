@@ -3,21 +3,17 @@ import Seo from "@/shared/layout-components/seo/seo";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Select from "react-select";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 const DatePicker = dynamic(() => import("react-datepicker"), { ssr: false });
 import { FilePond } from "react-filepond";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import network from "@/config";
-import { format } from "date-fns";
-import { act } from "react";
-import { useRouter } from 'next/router';
-import { to } from "react-spring";
-
+import { useRouter } from "next/router";
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const CreateUpdatePurchaseOrder = (props) => {
-    const router = useRouter();
+  const router = useRouter();
 
   const formType = props.formType;
   const [formData, setFormData] = useState({
@@ -38,7 +34,7 @@ const CreateUpdatePurchaseOrder = (props) => {
   const [gcBusiness, setGcBusiness] = useState(null);
   const [files, setFiles] = useState([]);
   const [token, setToken] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadingState = () => {
     setLoading(true);
@@ -66,19 +62,17 @@ const CreateUpdatePurchaseOrder = (props) => {
       console.log("Error removing file:", error);
       return;
     }
-  
+
     // Remove the file from the state
     const updatedFiles = files.filter((f) => f.source !== file.source);
     setFiles(updatedFiles);
-  
+
     // Remove the file URL from the formData
     const updatedDocumentUrls = formData.document_urls.filter(
       (url) => url !== file.source
     );
     setFormData({ ...formData, document_urls: updatedDocumentUrls });
   };
-
-  
 
   const handleFilePurchase = (response) => {
     axios
@@ -150,13 +144,12 @@ const CreateUpdatePurchaseOrder = (props) => {
           console.log(response);
           if (response.data.status === 200) {
             updateLocalStorage().then(() => {
-            toast.dismiss("loading");
-            toast.success("Purchase Order Updated Successfully");
-            setTimeout(() => {
-                router.push('/components/project-management/purchase-orders/');
+              toast.dismiss("loading");
+              toast.success("Purchase Order Updated Successfully");
+              setTimeout(() => {
+                router.push("/components/project-management/purchase-orders/");
               }, 1000);
             });
-
           }
         })
         .catch((error) => {
@@ -199,9 +192,9 @@ const CreateUpdatePurchaseOrder = (props) => {
               toast.dismiss("loading");
               toast.success("Purchase Order Updated Successfully");
               setTimeout(() => {
-                  router.push('/components/project-management/purchase-orders/');
-                }, 1000);
-              });
+                router.push("/components/project-management/purchase-orders/");
+              }, 1000);
+            });
           }
         })
         .catch((error) => {
@@ -220,27 +213,35 @@ const CreateUpdatePurchaseOrder = (props) => {
     }
     if (formType === "update" && token !== "") {
       axios
-        .get(`${network.onlineUrl}api/purchase_Order/${props.purchaseOrderId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        .get(
+          `${network.onlineUrl}api/purchase_Order/${props.purchaseOrderId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
         .then((response) => {
           const data = response.data.body.data.attributes;
           setFormData({
             ...data,
-            order_date: data.Order_date? new Date(data.Order_date) : "" ,
-            delivery_date: data.Delivery_date? new Date(data.Delivery_date) : ""
+            order_date: data.Order_date ? new Date(data.Order_date) : "",
+            delivery_date: data.Delivery_date
+              ? new Date(data.Delivery_date)
+              : "",
           });
           setFiles(
             data.document_urls.map((url) => {
               return { source: url };
             })
           );
+          setLoading(false);
         })
         .catch((error) => {
           console.log(error);
         });
+    } else if (formType === "create") {
+      setLoading(false);
     }
   }, [token]);
 
@@ -266,7 +267,9 @@ const CreateUpdatePurchaseOrder = (props) => {
       localStorage.getItem("selectedProject") !== null &&
       localStorage.getItem("selectedProject") !== "undefined"
     ) {
-      const selectedProject = JSON.parse(localStorage.getItem("selectedProject"));
+      const selectedProject = JSON.parse(
+        localStorage.getItem("selectedProject")
+      );
       setSelectedProject(selectedProject);
     } else {
       setSelectedProject(null);
@@ -277,270 +280,284 @@ const CreateUpdatePurchaseOrder = (props) => {
     <div>
       <Seo
         title={`${
-          formType === "update" ? "Update Purchase Order" : "Create Purchase Order"
+          formType === "update"
+            ? "Update Purchase Order"
+            : "Create Purchase Order"
         }`}
       />
       <ToastContainer />
       <Pageheader
-        mainpage={`${formType === "update" ? "Update" : "Create"} Purchase Order`}
+        mainpage={`${
+          formType === "update" ? "Update" : "Create"
+        } Purchase Order`}
         activepage={`${selectedProject?.attributes?.name || `Project Summary`}`}
-        mainpageurl="/components/project-management/project-summary/"
+        mainpageurl="/components/project-management/purchase-orders/"
         loadProjectData={getDataFromLocalStorage}
         createProject={false}
         loadingState={loadingState}
         isDisabled={true}
       />
-
-      <div className="box-body">
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-12 gap-6">
-            <div className="xl:col-span-12 col-span-12">
-              <div className="box custom-box">
-                <div className="box-header">
-                  <div className="box-title">
-                    {formType === "update"
-                      ? "Update Purchase Order"
-                      : "Create Purchase Order"}
+      {loading ? (
+        <Preloader />
+      ) : (
+        <div className="box-body">
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-12 gap-6">
+              <div className="xl:col-span-12 col-span-12">
+                <div className="box custom-box">
+                  <div className="box-header">
+                    <div className="box-title">
+                      {formType === "update"
+                        ? "Update Purchase Order"
+                        : "Create Purchase Order"}
+                    </div>
                   </div>
-                </div>
-                <div className="box-body">
-                  <div className="grid grid-cols-12 gap-4">
-                    {/* input field for Order Date */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="order_date" className="form-label">
-                        Order Date:
-                      </label>
-                      <DatePicker
-                        selected={formData.order_date}
-                        onChange={(date) =>
-                          setFormData({ ...formData, order_date: date })
-                        }
-                        className="form-control"
-                        dateFormat="dd MMM yyyy"
-                      />
-                    </div>
-
-                    {/* input field for Delivery Date */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="delivery_date" className="form-label">
-                        Delivery Date:
-                      </label>
-                      <DatePicker
-                        selected={formData.delivery_date}
-                        onChange={(date) =>
-                          setFormData({ ...formData, delivery_date: date })
-                        }
-                        className="form-control"
-                        dateFormat="dd MMM yyyy"
-                      />
-                    </div>
-
-                    {/* input field for User */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="user_id" className="form-label">
-                        User:
-                      </label>
-                      <Select
-                        id="user_id"
-                        value={
-                          Users?.find((user) => user.id === formData.user_id)
-                            ? {
-                                value: formData.user_id,
-                                label: Users.find(
-                                  (user) => user.id === formData.user_id
-                                ).attributes.username,
-                              }
-                            : null
-                        }
-                        onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            user_id: selectedOption.value,
-                          })
-                        }
-                        options={Users?.map((user) => ({
-                          value: user.id,
-                          label: user.attributes.username,
-                        }))}
-                        menuPlacement="auto"
-                      />
-                    </div>
-
-                    {/* input field for Description */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="description" className="form-label">
-                        Description:
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    {/* input field for Amount */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="amount" className="form-label">
-                        Amount:
-                      </label>
-                      <input
-                        type="number"
-                        min={0}
-                        className="form-control"
-                        id="amount"
-                        value={formData.amount}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    {/* input field for Business */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="business_id" className="form-label">
-                        Business:
-                      </label>
-                      <Select
-                        id="business_id"
-                        value={
-                          gcBusiness?.find(
-                            (business) => business.id === formData.business_id
-                          )
-                            ? {
-                                value: formData.business_id,
-                                label: gcBusiness.find(
-                                  (business) => business.id === formData.business_id
-                                ).attributes.name,
-                              }
-                            : null
-                        }
-                        onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            business_id: selectedOption.value,
-                          })
-                        }
-                        options={gcBusiness?.map((business) => ({
-                          value: business.id,
-                          label: business.attributes.name,
-                        }))}
-                        menuPlacement="auto"
-                      />
-                    </div>
-
-                    {/* input field for Notes */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="notes" className="form-label">
-                        Notes:
-                      </label>
-                      <textarea
-                        className="form-control"
-                        id="notes"
-                        value={formData.notes.join("\n")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            notes: e.target.value.split("\n"),
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="xl:col-span-2 col-span-12">
-                      <label htmlFor="active" className="form-label">
-                        Active :
-                      </label>
-                      <br />
-                      <input
-                        type="checkbox"
-                        className="ti-switch mb-4"
-                        id="active"
-                        checked={formData.active}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* input field for Status */}
-                    <div className="xl:col-span-4 col-span-12">
-                <label htmlFor="status" className="form-label">
-                  Status
-                </label>
-                <Select
-                  id="status"
-                  value={{ value: formData.status, label: formData.status }}
-                  onChange={(selectedOption) =>
-                    handleInputChange({
-                      target: { id: "status", value: selectedOption.value },
-                    })
-                  }
-                  options={[
-  { value: "Pending", label: "Pending" },
-  { value: "Approved", label: "Approved" },
-  { value: "Shipped", label: "Shipped" },
-  { value: "Delivered", label: "Delivered" },
-]}
-                />
-              </div>
-
-                    {/* input field for PO Number */}
-                    <div className="xl:col-span-4 col-span-12">
-                      <label htmlFor="po_number" className="form-label">
-                        PO Number:
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="po_number"
-                        value={formData.po_number}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    {/* input field for Document URLs */}
-                    <div className="xl:col-span-12 col-span-12">
-                      <label htmlFor="document_urls" className="form-label">
-                        Document URLs:
-                      </label>
-                      <FilePond
-                        files={files}
-                        onupdatefiles={setFiles}
-                        allowMultiple={true}
-                        maxFiles={3}
-                        onremovefile={handleFileRemove}
-                        server={{
-                          url: "https://backend-api-topaz.vercel.app/api/upload",
-                          process: {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
-                          },
-                        }}
-                        onprocessfile={(error, file) => {
-                          if (error) {
-                            console.log("error", error);
-                          } else {
-                            handleFilePurchase(JSON.parse(file.serverId));
+                  <div className="box-body">
+                    <div className="grid grid-cols-12 gap-4">
+                      {/* input field for Order Date */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="order_date" className="form-label">
+                          Order Date:
+                        </label>
+                        <DatePicker
+                          selected={formData.order_date}
+                          onChange={(date) =>
+                            setFormData({ ...formData, order_date: date })
                           }
-                        }}
-                        name="files"
-                        labelIdle="Drag & Drop your files here or click"
-                      />
+                          className="form-control"
+                          dateFormat="dd MMM yyyy"
+                        />
+                      </div>
+
+                      {/* input field for Delivery Date */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="delivery_date" className="form-label">
+                          Delivery Date:
+                        </label>
+                        <DatePicker
+                          selected={formData.delivery_date}
+                          onChange={(date) =>
+                            setFormData({ ...formData, delivery_date: date })
+                          }
+                          className="form-control"
+                          dateFormat="dd MMM yyyy"
+                        />
+                      </div>
+
+                      {/* input field for User */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="user_id" className="form-label">
+                          User:
+                        </label>
+                        <Select
+                          id="user_id"
+                          value={
+                            Users?.find((user) => user.id === formData.user_id)
+                              ? {
+                                  value: formData.user_id,
+                                  label: Users.find(
+                                    (user) => user.id === formData.user_id
+                                  ).attributes.username,
+                                }
+                              : null
+                          }
+                          onChange={(selectedOption) =>
+                            setFormData({
+                              ...formData,
+                              user_id: selectedOption.value,
+                            })
+                          }
+                          options={Users?.map((user) => ({
+                            value: user.id,
+                            label: user.attributes.username,
+                          }))}
+                          menuPlacement="auto"
+                        />
+                      </div>
+
+                      {/* input field for Description */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="description" className="form-label">
+                          Description:
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="description"
+                          value={formData.description}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      {/* input field for Amount */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="amount" className="form-label">
+                          Amount:
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          className="form-control"
+                          id="amount"
+                          value={formData.amount}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      {/* input field for Business */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="business_id" className="form-label">
+                          Business:
+                        </label>
+                        <Select
+                          id="business_id"
+                          value={
+                            gcBusiness?.find(
+                              (business) => business.id === formData.business_id
+                            )
+                              ? {
+                                  value: formData.business_id,
+                                  label: gcBusiness.find(
+                                    (business) =>
+                                      business.id === formData.business_id
+                                  ).attributes.name,
+                                }
+                              : null
+                          }
+                          onChange={(selectedOption) =>
+                            setFormData({
+                              ...formData,
+                              business_id: selectedOption.value,
+                            })
+                          }
+                          options={gcBusiness?.map((business) => ({
+                            value: business.id,
+                            label: business.attributes.name,
+                          }))}
+                          menuPlacement="auto"
+                        />
+                      </div>
+
+                      {/* input field for Notes */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="notes" className="form-label">
+                          Notes:
+                        </label>
+                        <textarea
+                          className="form-control"
+                          id="notes"
+                          value={formData.notes.join("\n")}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              notes: e.target.value.split("\n"),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="xl:col-span-2 col-span-12">
+                        <label htmlFor="active" className="form-label">
+                          Active :
+                        </label>
+                        <br />
+                        <input
+                          type="checkbox"
+                          className="ti-switch mb-4"
+                          id="active"
+                          checked={formData.active}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      {/* input field for Status */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="status" className="form-label">
+                          Status
+                        </label>
+                        <Select
+                          id="status"
+                          value={{
+                            value: formData.status,
+                            label: formData.status,
+                          }}
+                          onChange={(selectedOption) =>
+                            handleInputChange({
+                              target: {
+                                id: "status",
+                                value: selectedOption.value,
+                              },
+                            })
+                          }
+                          options={[
+                            { value: "Pending", label: "Pending" },
+                            { value: "Approved", label: "Approved" },
+                            { value: "Shipped", label: "Shipped" },
+                            { value: "Delivered", label: "Delivered" },
+                          ]}
+                        />
+                      </div>
+
+                      {/* input field for PO Number */}
+                      <div className="xl:col-span-4 col-span-12">
+                        <label htmlFor="po_number" className="form-label">
+                          PO Number:
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="po_number"
+                          value={formData.po_number}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      {/* input field for Document URLs */}
+                      <div className="xl:col-span-12 col-span-12">
+                        <label htmlFor="document_urls" className="form-label">
+                          Document URLs:
+                        </label>
+                        <FilePond
+                          files={files}
+                          onupdatefiles={setFiles}
+                          allowMultiple={true}
+                          maxFiles={3}
+                          onremovefile={handleFileRemove}
+                          server={{
+                            url: "https://backend-api-topaz.vercel.app/api/upload",
+                            process: {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            },
+                          }}
+                          onprocessfile={(error, file) => {
+                            if (error) {
+                              console.log("error", error);
+                            } else {
+                              handleFilePurchase(JSON.parse(file.serverId));
+                            }
+                          }}
+                          name="files"
+                          labelIdle="Drag & Drop your files here or click"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="box-footer">
-                  <button
-                    type="submit"
-                    className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
-                  >
-                    {formType === "update"
-                      ? "Update Purchase Order"
-                      : "Create Purchase Order"}
-                  </button>
+                  <div className="box-footer">
+                    <button
+                      type="submit"
+                      className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
+                    >
+                      {formType === "update"
+                        ? "Update Purchase Order"
+                        : "Create Purchase Order"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

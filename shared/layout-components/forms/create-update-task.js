@@ -3,39 +3,13 @@ import Seo from "@/shared/layout-components/seo/seo";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Select from "react-select";
-import { z } from "zod";
-import Link from "next/link";
-const today = new Date();
-const isoDate = today.toISOString();
 import { FilePond } from "react-filepond";
 import network from "@/config";
-import { data } from "@/shared/data/tables/datatabledata";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import format from "date-fns/format";
 import { useRouter } from "next/router";
-import Preloader from "../preloader/preloader";
-import { to } from "react-spring";
-
-const formDataSchema = z.object({
-  task_amount_from_sub: z
-    .string()
-    .nonempty({ message: "Task Amount From Sub is required" }),
-  task_status: z.string().nonempty({ message: "Task Status is required" }),
-  description: z.string().nonempty({ message: "Description is required" }),
-  task_details_from_sub: z
-    .string()
-    .nonempty({ message: "Task Details From Sub is required" }),
-  task_outscope: z.string().nonempty({ message: "Task Outscope is required" }),
-  task_inscope: z.string().nonempty({ message: "Task Inscope is required" }),
-  subcontractor_id: z
-    .string()
-    .nonempty({ message: "Subcontractor ID is required" }),
-  builder_notes: z.string().nonempty({ message: "Builder Notes is required" }),
-  task_payment_terms: z
-    .string()
-    .nonempty({ message: "Task Payment Terms is required" }),
-});
+import Preloader from "@/shared/layout-components/preloader/preloader";
 
 const CreateUpdateTask = (props) => {
   const router = useRouter();
@@ -60,15 +34,9 @@ const CreateUpdateTask = (props) => {
     files_urls: [],
     task_original_id: null,
   });
-  const [scopeData, setScopeData] = useState({
-    task_inscope: [{ taskDetail: "" }],
-    task_outscope: [{ taskDetail: "" }],
-  });
   const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedTaskCostCodes, setSelectedTaskCostCodes] = useState([]);
-  const [progress, setProgress] = useState(0);
   const [gcBusiness, setGcBuisness] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const updateLocalStorage = async () => {
     try {
@@ -92,26 +60,24 @@ const CreateUpdateTask = (props) => {
   const loadingState = () => {
     setLoading(true);
   };
-  const handleProgressChange = (event) => {
-    setProgress(event.target.value);
-  };
 
   const handleFileRemove = (error, file) => {
     if (error) {
       console.log("Error removing file:", error);
       return;
     }
-  
+
     // Remove the file from the state
     const updatedFiles = files.filter((f) => f.source !== file.source);
     setFiles(updatedFiles);
-  
+
     // Remove the file URL from the formData
     const updatedDocumentUrls = formData.document_urls.filter(
       (url) => url !== file.source
     );
     setFormData({ ...formData, document_urls: updatedDocumentUrls });
   };
+
   const handleFileUpload = (response) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -120,6 +86,7 @@ const CreateUpdateTask = (props) => {
         : [response[0].file_url],
     }));
   };
+
   useEffect(() => {
     if (formType === "update") {
       axios
@@ -148,10 +115,13 @@ const CreateUpdateTask = (props) => {
             filesUrls: task.files_urls,
             task_original_id: response.data.body.data.id,
           });
+          setLoading(false);
         })
         .catch((error) => {
           console.log(error);
         });
+    } else if (formType === "create") {
+      setLoading(false);
     }
   }, []);
 
@@ -164,11 +134,6 @@ const CreateUpdateTask = (props) => {
       setGcBuisness(JSON.parse(localStorage.getItem("gcBuisness")));
     }
   }, []);
-
-  const formDataSchema = z.object({
-    status: z.string().nonempty({ message: "Status is required" }),
-    priority: z.string().nonempty({ message: "Priority is required" }),
-  });
 
   const handleInputChange = (event) => {
     const { id, value } = event.target;
@@ -327,252 +292,259 @@ const CreateUpdateTask = (props) => {
         loadProjectData={getDataFromLocalStorage}
         loadingState={loadingState}
       />
-      <div className="flex justify-between">
-        <div className="ml-auto"></div>
-      </div>
-      <div className="box">
-        <div className="box-header justify-between">
-          <div className="box-title">{`${
-            formType === "update" ? "Update Task" : "Create A New Task"
-          }`}</div>
-        </div>
-        <div className="box-body">
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label htmlFor="taskCode" className="form-label">
-                  Task Code
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="taskCode"
-                  onChange={handleInputChange}
-                  value={formData.taskCode}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="taskName" className="form-label">
-                  Task Name
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="taskName"
-                  onChange={handleInputChange}
-                  value={formData.taskName}
-                />
-              </div>
+      {loading ? (
+        <Preloader />
+      ) : (
+        <div className="box">
+          <div className="box-header justify-between">
+            <div className="box-title">{`${
+              formType === "update" ? "Update Task" : "Create A New Task"
+            }`}</div>
+          </div>
+          <div className="box-body">
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="mb-4">
+                  <label htmlFor="taskCode" className="form-label">
+                    Task Code
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="taskCode"
+                    onChange={handleInputChange}
+                    value={formData.taskCode}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="taskName" className="form-label">
+                    Task Name
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="taskName"
+                    onChange={handleInputChange}
+                    value={formData.taskName}
+                  />
+                </div>
 
-              <div className="mb-4">
-                <label htmlFor="startDate" className="form-label">
-                  Start Date
-                </label>
-                <input
-                  type="datetime-local"
-                  className="form-control"
-                  id="startDate"
-                  onChange={handleInputChange}
-                  value={
-                    formData.startDate
-                      ? format(
-                          new Date(formData.startDate),
-                          "yyyy-MM-dd'T'HH:mm"
-                        )
-                      : null
-                  }
-                />
+                <div className="mb-4">
+                  <label htmlFor="startDate" className="form-label">
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="form-control"
+                    id="startDate"
+                    onChange={handleInputChange}
+                    value={
+                      formData.startDate
+                        ? format(
+                            new Date(formData.startDate),
+                            "yyyy-MM-dd'T'HH:mm"
+                          )
+                        : null
+                    }
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="endDate" className="form-label">
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="form-control"
+                    id="endDate"
+                    onChange={handleInputChange}
+                    value={
+                      formData.endDate
+                        ? format(
+                            new Date(formData.endDate),
+                            "yyyy-MM-dd'T'HH:mm"
+                          )
+                        : null
+                    }
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="taskOwnerId" className="form-label">
+                    Task Owner ID
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-control"
+                    id="taskOwnerId"
+                    onChange={handleInputChange}
+                    value={formData.taskOwnerId}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="businessId" className="form-label">
+                    Business ID
+                  </label>
+                  <Select
+                    id="businessId"
+                    value={
+                      gcBusiness?.find(
+                        (business) => business.id === formData.businessId
+                      )
+                        ? {
+                            value: formData.businessId,
+                            label: gcBusiness.find(
+                              (business) => business.id === formData.businessId
+                            ).attributes.name,
+                          }
+                        : null
+                    }
+                    onChange={(selectedOption) =>
+                      handleInputChange({
+                        target: {
+                          id: "businessId",
+                          value: selectedOption.value,
+                        },
+                      })
+                    }
+                    options={gcBusiness.map((business) => ({
+                      value: business.id,
+                      label: business.attributes.name,
+                    }))}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="status" className="form-label">
+                    Status
+                  </label>
+                  <Select
+                    id="status"
+                    value={{ value: formData.status, label: formData.status }}
+                    onChange={(selectedOption) =>
+                      handleInputChange({
+                        target: { id: "status", value: selectedOption.value },
+                      })
+                    }
+                    options={[
+                      { value: "Yet to Start", label: "Yet to Start" },
+                      { value: "In progress", label: "In progress" },
+                      { value: "Complete", label: "Complete" },
+                      { value: "Delayed", label: "Delayed" },
+                    ]}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="percentageComplete" className="form-label">
+                    Percentage Complete
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-control"
+                    id="percentageComplete"
+                    onChange={handleInputChange}
+                    value={formData.percentageComplete}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="description" className="form-label">
+                    Description
+                  </label>
+                  <textarea
+                    className="form-control"
+                    id="description"
+                    rows="3"
+                    cols="50"
+                    onChange={handleInputChange}
+                    value={formData.description}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="notes" className="form-label">
+                    Notes
+                  </label>
+                  <textarea
+                    className="form-control"
+                    id="notes"
+                    rows="3"
+                    cols="50"
+                    onChange={handleInputChange}
+                    value={formData.notes?.join("\n")}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="estimatedBudget" className="form-label">
+                    Estimated Budget
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-control"
+                    id="estimatedBudget"
+                    onChange={handleInputChange}
+                    value={formData.estimatedBudget}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="actualSpent" className="form-label">
+                    Actual Spent
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-control"
+                    id="actualSpent"
+                    onChange={handleInputChange}
+                    value={formData.actualSpent}
+                  />
+                </div>
               </div>
-              <div className="mb-4">
-                <label htmlFor="endDate" className="form-label">
-                  End Date
-                </label>
-                <input
-                  type="datetime-local"
-                  className="form-control"
-                  id="endDate"
-                  onChange={handleInputChange}
-                  value={
-                    formData.endDate
-                      ? format(new Date(formData.endDate), "yyyy-MM-dd'T'HH:mm")
-                      : null
-                  }
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="taskOwnerId" className="form-label">
-                  Task Owner ID
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  className="form-control"
-                  id="taskOwnerId"
-                  onChange={handleInputChange}
-                  value={formData.taskOwnerId}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="businessId" className="form-label">
-                  Business ID
-                </label>
-                <Select
-                  id="businessId"
-                  value={
-                    gcBusiness?.find(
-                      (business) => business.id === formData.businessId
-                    )
-                      ? {
-                          value: formData.businessId,
-                          label: gcBusiness.find(
-                            (business) => business.id === formData.businessId
-                          ).attributes.name,
-                        }
-                      : null
-                  }
-                  onChange={(selectedOption) =>
-                    handleInputChange({
-                      target: { id: "businessId", value: selectedOption.value },
-                    })
-                  }
-                  options={gcBusiness.map((business) => ({
-                    value: business.id,
-                    label: business.attributes.name,
-                  }))}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="status" className="form-label">
-                  Status
-                </label>
-                <Select
-                  id="status"
-                  value={{ value: formData.status, label: formData.status }}
-                  onChange={(selectedOption) =>
-                    handleInputChange({
-                      target: { id: "status", value: selectedOption.value },
-                    })
-                  }
-                  options={[
-                    { value: "Yet to Start", label: "Yet to Start" },
-                    { value: "In progress", label: "In progress" },
-                    { value: "Complete", label: "Complete" },
-                    { value: "Delayed", label: "Delayed" },
-                  ]}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="percentageComplete" className="form-label">
-                  Percentage Complete
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  className="form-control"
-                  id="percentageComplete"
-                  onChange={handleInputChange}
-                  value={formData.percentageComplete}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="description" className="form-label">
-                  Description
-                </label>
-                <textarea
-                  className="form-control"
-                  id="description"
-                  rows="3"
-                  cols="50"
-                  onChange={handleInputChange}
-                  value={formData.description}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="notes" className="form-label">
-                  Notes
-                </label>
-                <textarea
-                  className="form-control"
-                  id="notes"
-                  rows="3"
-                  cols="50"
-                  onChange={handleInputChange}
-                  value={formData.notes?.join("\n")}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="estimatedBudget" className="form-label">
-                  Estimated Budget
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  className="form-control"
-                  id="estimatedBudget"
-                  onChange={handleInputChange}
-                  value={formData.estimatedBudget}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="actualSpent" className="form-label">
-                  Actual Spent
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  className="form-control"
-                  id="actualSpent"
-                  onChange={handleInputChange}
-                  value={formData.actualSpent}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-              <div className="mb-4">
-                <label htmlFor="filesUrls" className="form-label">
-                  Files URLs
-                </label>
-                <FilePond
-                  className="multiple-filepond"
-                  acceptedFileTypes={[
-                    "application/pdf",
-                    "image/png",
-                    "image/jpeg",
-                    "image/gif",
-                  ]}
-                  server={{
-                    url: `${network.onlineUrl}api/upload`,
-                    process: {
-                      headers: {
-                        Authorization: `Bearer ${network.token}`,
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div className="mb-4">
+                  <label htmlFor="filesUrls" className="form-label">
+                    Files URLs
+                  </label>
+                  <FilePond
+                    className="multiple-filepond"
+                    acceptedFileTypes={[
+                      "application/pdf",
+                      "image/png",
+                      "image/jpeg",
+                      "image/gif",
+                    ]}
+                    server={{
+                      url: `${network.onlineUrl}api/upload`,
+                      process: {
+                        headers: {
+                          Authorization: `Bearer ${network.token}`,
+                        },
+                        onload: (response) =>
+                          handleFileUpload(JSON.parse(response)),
                       },
-                      onload: (response) =>
-                        handleFileUpload(JSON.parse(response)),
-                    },
-                  }}
-                  allowReorder={true}
-                  files={files}
-                  onupdatefiles={setFiles}
-                  allowMultiple={true}
-                  allowImagePreview={true}
-                  onremovefile={handleFileRemove}
-                  maxFiles={10}
-                  name="files"
-                  labelIdle='Drag & Drop your files or <span className="filepond--label-action">Browse</span>'
-                />
+                    }}
+                    allowReorder={true}
+                    files={files}
+                    onupdatefiles={setFiles}
+                    allowMultiple={true}
+                    allowImagePreview={true}
+                    onremovefile={handleFileRemove}
+                    maxFiles={10}
+                    name="files"
+                    labelIdle='Drag & Drop your files or <span className="filepond--label-action">Browse</span>'
+                  />
+                </div>
               </div>
-            </div>
-            <div className="box-footer">
-              <button
-                type="submit"
-                className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
-              >
-                {formType === "update" ? "Update Task" : "Create Task"}
-              </button>
-            </div>
-          </form>
+              <div className="box-footer">
+                <button
+                  type="submit"
+                  className="ti-btn ti-btn-primary btn-wave ms-auto float-right"
+                >
+                  {formType === "update" ? "Update Task" : "Create Task"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
