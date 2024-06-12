@@ -97,6 +97,22 @@ const CreateUpdateChangeOrder = (props) => {
       document_urls: [...formData.document_urls, response[0].file_url],
     });
   };
+  const handleFileRemove = (error, file) => {
+    if (error) {
+      console.log("Error removing file:", error);
+      return;
+    }
+  
+    // Remove the file from the state
+    const updatedFiles = files.filter((f) => f.source !== file.source);
+    setFiles(updatedFiles);
+  
+    // Remove the file URL from the formData
+    const updatedDocumentUrls = formData.document_urls.filter(
+      (url) => url !== file.source
+    );
+    setFormData({ ...formData, document_urls: updatedDocumentUrls });
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -314,6 +330,7 @@ const CreateUpdateChangeOrder = (props) => {
                         onupdatefiles={setFiles}
                         allowMultiple={true}
                         maxFiles={3}
+                        onremovefile={handleFileRemove}
                         server={{
                           url: "https://backend-api-topaz.vercel.app/api/upload",
                           process: {

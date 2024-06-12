@@ -90,6 +90,23 @@ const CreateUpdateTask = (props) => {
   const handleProgressChange = (event) => {
     setProgress(event.target.value);
   };
+
+  const handleFileRemove = (error, file) => {
+    if (error) {
+      console.log("Error removing file:", error);
+      return;
+    }
+  
+    // Remove the file from the state
+    const updatedFiles = files.filter((f) => f.source !== file.source);
+    setFiles(updatedFiles);
+  
+    // Remove the file URL from the formData
+    const updatedDocumentUrls = formData.document_urls.filter(
+      (url) => url !== file.source
+    );
+    setFormData({ ...formData, document_urls: updatedDocumentUrls });
+  };
   const handleFileUpload = (response) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -530,6 +547,7 @@ const CreateUpdateTask = (props) => {
                   onupdatefiles={setFiles}
                   allowMultiple={true}
                   allowImagePreview={true}
+                  onremovefile={handleFileRemove}
                   maxFiles={10}
                   name="files"
                   labelIdle='Drag & Drop your files or <span className="filepond--label-action">Browse</span>'
