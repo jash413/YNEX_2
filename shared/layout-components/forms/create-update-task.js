@@ -70,6 +70,20 @@ const CreateUpdateTask = (props) => {
   const [gcBusiness, setGcBuisness] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const updateLocalStorage = async () => {
+  try {
+    const response = await axios.get(`${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    localStorage.setItem("projectTasks", JSON.stringify(response.data.body.data));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
   const loadingState = () => {
     setLoading(true);
   };
@@ -94,6 +108,7 @@ const CreateUpdateTask = (props) => {
         })
         .then((response) => {
           const task = response.data.body.data.attributes;
+          
           setFiles(task.files_urls.map((file_url) => ({ source: file_url })));
           setFormData({
             taskCode: task.task_code_id,
@@ -133,26 +148,6 @@ const CreateUpdateTask = (props) => {
     priority: z.string().nonempty({ message: "Priority is required" }),
   });
 
-  const updateTasksLocal = () => {
-    if (selectedProject) {
-      axios
-        .get(
-          `${network.onlineUrl}api/task?filter[project]=${selectedProject.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        )
-        .then((response) => {
-          localStorage.setItem(
-            "projectTasks",
-            JSON.stringify(response.data.body.data)
-          );
-        })
-        .catch((error) => {
-          console.error("Error fetching tasks:", error);
-        });
-    }
-  };
 
   const handleInputChange = (event) => {
     const { id, value } = event.target;
@@ -206,12 +201,14 @@ const CreateUpdateTask = (props) => {
           )
           .then((response) => {
             if (response.status === 200) {
-              updateTasksLocal();
-              toast.dismiss("loading");
-              toast.success("Task updated successfully");
-              setTimeout(() => {
-                router.push("/components/project-management/tasks");
-              }, 1000);
+              updateLocalStorage().then(() => {
+  toast.dismiss("loading");
+  setFormData({});
+  toast.success("Task created successfully");
+  setTimeout(() => {
+    router.push("/components/project-management/tasks");
+  }, 1000);
+});
             }
             console.log(response);
           })
@@ -257,13 +254,14 @@ const CreateUpdateTask = (props) => {
           )
           .then((response) => {
             if (response.data.status === 201) {
-              updateTasksLocal();
-              toast.dismiss("loading");
-              setFormData({});
-              toast.success("Task created successfully");
-              setTimeout(() => {
-                router.push("/components/project-management/tasks");
-              }, 1000);
+              updateLocalStorage().then(() => {
+                toast.dismiss("loading");
+                setFormData({});
+                toast.success("Task created successfully");
+                setTimeout(() => {
+                  router.push("/components/project-management/tasks");
+                }, 1000);
+              });
             }
             console.log(response);
           })
