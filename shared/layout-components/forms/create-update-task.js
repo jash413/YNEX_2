@@ -443,6 +443,7 @@ const CreateUpdateTask = (props) => {
                     id="percentageComplete"
                     onChange={handleInputChange}
                     value={formData.percentageComplete}
+                    placeholder="%"
                   />
                 </div>
                 <div className="mb-4">
