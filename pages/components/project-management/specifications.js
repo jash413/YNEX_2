@@ -48,9 +48,9 @@ const Specifications = () => {
         const formData = data[form.attributes.spec_configurations.title] || {};
         const isComplete = isFormComplete(form, data);
         const isPartiallyComplete =
-          form.attributes.spec_configurations.sections.some((section) =>
-            section.fields.some((field) => isFieldComplete(field, formData))
-          );
+        form.attributes?.spec_configurations?.sections?.some((section) =>
+          section?.fields?.some((field) => isFieldComplete(field, formData))
+        ) || false;
 
         newStatus[form.attributes.code] = isComplete
           ? "complete"
@@ -213,7 +213,7 @@ const Specifications = () => {
         const boxSize = 4;
         const boxMargin = 1;
 
-        field.options.forEach((option) => {
+        field?.options?.forEach((option) => {
           const optionValue = option.value.toString();
           const isChecked =
             field.inputType === "checkbox"
@@ -243,7 +243,7 @@ const Specifications = () => {
         return yPos;
       };
 
-      selectedSpecification.forEach((form, formIndex) => {
+      selectedSpecification?.forEach((form, formIndex) => {
         if (formIndex > 0) {
           doc.addPage();
           yPos = 15;
@@ -270,7 +270,7 @@ const Specifications = () => {
           );
         }
 
-        form.attributes.spec_configurations.sections.forEach((section) => {
+        form?.attributes?.spec_configurations?.sections?.forEach((section) => {
           try {
             doc
               .setFontSize(12)
@@ -282,7 +282,7 @@ const Specifications = () => {
             console.error(`Error adding section: ${section.sectionName}`, e);
           }
 
-          section.fields.forEach((field) => {
+          section?.fields?.forEach((field) => {
             try {
               const value = getFieldValue(form, field);
               const label = field.label ? `${field.label}:` : "";

@@ -51,6 +51,7 @@ const Firebaselogin = () => {
         localStorage.removeItem("projectSpecifications");
         localStorage.removeItem("projectSelections");
         localStorage.removeItem("selectedProject");
+        localStorage.removeItem("formData");
         RouteChange();
       })
       .catch((err) => {
